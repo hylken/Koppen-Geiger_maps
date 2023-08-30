@@ -34,7 +34,6 @@ def main():
     
     koppen_table = pd.read_csv(os.path.join('assets','koppen_table.csv'))
     country_shp = shapefile.Reader(os.path.join('assets','TM_WORLD_BORDERS-0.3','TM_WORLD_BORDERS-0.3.shp'),encoding='ISO8859-1')
-    treelines_shp = shapefile.Reader(os.path.join('assets','treeline','treeline_simple.shp'),encoding='ISO8859-1')
 
     rgb_vals = koppen_table[['Red','Green','Blue']].values
     kg_cmap = matplotlib.colors.ListedColormap(rgb_vals/255)
@@ -84,63 +83,11 @@ def main():
                         )
                 print("Time elapsed is "+str(time.time()-t0)+" sec")
     
-    pdb.set_trace()
-    
-    #==============================================================================
-    #   Generate figures of Koppen-Geiger maps with tree lines overlay
-    #==============================================================================
-    '''
-    regions = [
-        ['Western Canada',(-135,-129,58,64),False,(2.8,2.8)], 
-        ['Carpathian Mts',(24,26,44.5,46.5),False,(2.8,2.8)],
-        ['Siberian Federal Zone',(108,118,52,62),False,(2.8,2.8)],
-        ['Merida',(-74,-68,5,11),False,(2.8,2.8)],
-        ['Gaoligong Mountain',(98,102,26,30),False,(2.8,2.8)],
-        ['Rivero Island',(-74.5,-72.5,-45.5,-43.5),False,(2.8,2.8)],
-        ['Groot Winterhoek Nature Reserve',(18,20,-34,-32),False,(2.8,2.8)],
-        ['Snow Mts',(147.5,149.5,-37.5,-35.5),False,(2.8,2.8)],
-        ]
-        
-    # Create output folder if it doesn't exist
-    if os.path.isdir(os.path.join(config['folder_stats'],'climatologies'))==False:
-        os.makedirs(os.path.join(config['folder_stats'],'climatologies'))        
-    
-    # Loop over regions
-    suffix = str(180/config['mapsize'][0]).replace('.','p')
-    filepath = os.path.join(config['folder_out'],'climatologies',
-        str(config['periods_historical'][-1][0])+'_'+str(config['periods_historical'][-1][1]),
-        'koppen_geiger_'+suffix+'.nc')
-    print('Loading '+filepath)
-    t0 = time.time()
-    dset = Dataset(filepath)
-    data = np.array(dset.variables['kg_class'][:]).astype(np.single)
-    dset.close()
-    data[data==0] = np.NaN
-    for rr in np.arange(len(regions)):
-        print('Making figure for '+regions[rr][0])
-        fname = regions[rr][0].replace(' ','_')+'_treelines.png'
-        figout = os.path.join(config['folder_stats'],'climatologies',fname)
-        tools.plot_map(
-            data=data,
-            data_extent=(-180, 180, -90, 90),
-            figout=figout,
-            figdims=regions[rr][3],
-            cmap=kg_cmap,
-            plot_extent=regions[rr][1],
-            lims=(0.5,30.5),
-            interpolation='nearest',
-            shp=treelines_shp,
-            color='r',
-            show_axes=regions[rr][2]
-            )
-    print("Time elapsed is "+str(time.time()-t0)+" sec")
-    '''
-    
 
     #==============================================================================
     #   Generate LaTeX table of classification accuracy
     #==============================================================================
-    '''
+
     df_accuracy = pd.read_csv(os.path.join(config['folder_stats'],'validation','accuracy.csv'),index_col=0)
     
     with open(os.path.join(config['folder_stats'],'validation','accuracy.tex'), 'w') as f:
@@ -153,10 +100,10 @@ def main():
             f.write('$'+"{:.1f}".format(df_accuracy.iloc[pp,4])+'$')
             if pp<df_accuracy.shape[0]-1:
                 f.write('\\\\\n')
-    '''
+
 
     #==============================================================================
-    #   Generate Sankey diagram
+    #   Generate Sankey diagrams
     #==============================================================================
     
     scenarios = ['ssp119','ssp126','ssp245','ssp370','ssp434','ssp460','ssp585']

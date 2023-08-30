@@ -163,7 +163,7 @@ def main():
             dir_local = os.path.join(config['folder_out'],'climatologies'),
             dir_remote = '')
     
-    print("Don't forget to add legend.txt file manually to the two Koppen-Geiger archives!")
+    print("Don't forget to add the legend.txt file manually to the two Koppen-Geiger archives!")
     
     pdb.set_trace()
     

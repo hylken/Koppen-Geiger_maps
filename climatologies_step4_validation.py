@@ -44,9 +44,9 @@ def main():
     res = 180/config['upscale_mapsizes'][0][0]
     xi, yi = np.meshgrid(np.arange(-180+res/2,180+res/2,res), np.arange(90-res/2,-90-res/2,-res))
     area_map = 10**-6*(40075*res/360)**2*np.cos(np.deg2rad(yi))
-    '''
-    df_kg_major_change_prct = pd.DataFrame(np.zeros((len(scenarios),2))*np.NaN,index=scenarios,columns=['1901-1930 to 1991-2020','1991-2020 to 2071-2100'])
-    
+
+    # Loop over scenarios and periods
+    df_kg_major_change_prct = pd.DataFrame(np.zeros((len(scenarios),2))*np.NaN,index=scenarios,columns=['1901-1930 to 1991-2020','1991-2020 to 2071-2100'])    
     for scenario in scenarios:
         print('===============================================================================')
         print('Compute areas covered by major KG classes and transitions for '+scenario)
@@ -132,8 +132,7 @@ def main():
         
     # Save results
     df_kg_major_change_prct.to_csv(os.path.join(config['folder_stats'],'climatologies','kg_major_change_prct.csv'),index=False)
-    '''
-    
+   
     
     #==============================================================================
     #   Load station data and compute KG classes
