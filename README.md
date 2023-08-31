@@ -31,8 +31,9 @@ Scripts related to generating the final high-resolution precipitation and air te
 This script loads the CRU air temperature and GPCC precipitation datasets. It then iterates over each combination of station-based air temperature and precipitation climatic datasets, generating adjusted high-resolution climatologies for each historical period using change offsets and factors derived from the CRU and GPCC data. Lastly, based on the ensemble of adjusted station-based climatologies, the script calculates final climatologies, their associated uncertainty estimates, and produces Köppen-Geiger maps for the historical periods.
 
 ### `climatologies_step2_future.py`
+The script loads climate model data and averages it over ensemble members. It then then loops over the variables and ensemble members, creating a dictionary to store the data. For each variable and ensemble member, it checks if both historical and projection data exist. If not, it skips processing. It then loads the historical and projection data from .npz files and stores it in the dictionary. It checks the temporal completeness of the data and if it is incomplete, it sets the data to NaN. It then computes the average over all ensemble members for each variable.
 
-
+It then generates high-resolution future climatologies by looping over the variables and months, loading a high-resolution historic reference climatology for each variable and month. It produces a change map to adjust the climatology to the target period and month based on the monthly climate model data. The code then saves the temporally adjusted, high-resolution future climatology to an nc file. After processing all models, the code computes the ensemble mean and standard deviation and computes Köppen-Geiger classification maps and uncertainty.
 
 ### `climatologies_step3_resample_and_package.py`
 
