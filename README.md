@@ -10,6 +10,10 @@ This repository contains XXX for paper XXX.
 
 Scripts related to processing the CMIP6 model data and assessing the sensitivities of the models.
 
+### `config_kaust.py`
+
+The configuration file specifies various settings for processing data. It sets the map size, upscale map sizes, historical and future periods, and version. It specifies whether to skip existing files and the datasets to use for precipitation and temperature data. The file also sets the output, statistics, maps, raw data, processed data, and station data folder paths. It defines the variables to process, including their names, units, and change limits. The file specifies whether to perform synchronization and the synchronization command to use
+
 ### `climate_model_step1_data_to_npz.py`
 
 This script processes the climate model data. It loops over various scenarios, models, and ensemble members, loading the data from NetCDF files. The data is then resampled, and various statistics such as mean, minimum, and maximum are computed for both global and land surface time series. The processed data is saved in NPZ format, and optional verification figures are generated to visualize the time series and spatial distribution of the variables.
