@@ -37,6 +37,9 @@ It then generates high-resolution future climatologies by looping over the varia
 
 ### `climatologies_step3_resample_and_package.py`
 
+The script resamples high-resolution netCDF files to create low-resolution, upscaled versions and saves them as netCDF files. It loops over all files in the climatologies directory and checks if the file is an ensemble mean or standard deviation file or a Köppen-Geiger map file. For each file, it loops over the upscale map sizes specified in the configuration file and creates a new file name with the appropriate suffix. If the file is an ensemble mean or standard deviation file, the code resamples the precipitation and air temperature climatologies for each month and variable and saves the resampled data to a new netCDF file.
+
+The code then converts the Köppen-Geiger maps from netCDF files to geoTIFF files. It first creates a Köppen-Geiger colormap for the geoTIFF using the koppen_table data. The code then loops over all files in the climatologies directory and checks if the file is a Köppen-Geiger map file. For each file, it creates a new file name with the .tif extension and loads the kg_class data from the netCDF file. The code then saves the data to a geoTIFF file using the tools.write_to_geotiff function and the previously created colormap.
 
 ### `climatologies_step4_validation.py`
 
