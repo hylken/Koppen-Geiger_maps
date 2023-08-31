@@ -1,4 +1,8 @@
+
 # Title
+
+![2071_2099_ssp245_World_koppen_geiger_0p01](https://github.com/hylken/Koppen-Geiger_maps/assets/122258032/41fedb32-30a5-4d43-a167-9a60e6063b31)
+
 
 This repository contains XXX for paper XXX.
 
