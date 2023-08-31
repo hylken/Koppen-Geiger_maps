@@ -47,6 +47,8 @@ The script computes the areas covered by major Köppen-Geiger classes and transi
 
 ### `climatologies_step5_generate_figs_tables.py`
 
+The script generates figures of Köppen-Geiger maps for periods and scenarios, creates a LaTeX table of classification accuracy, and generates Sankey diagrams for periods and scenarios. It defines a list of regions. It then loops over all files in the climatologies directory and checks if the file is a Köppen-Geiger map file. For each file, it loads the kg_class data from the netCDF file and generates a figure of the map for each region. The code reads the accuracy data from a CSV file and writes it to a .tex file as a LaTeX table. It then loops over the scenarios, loading area and transition data from CSV files and creating node and link lists for the Sankey diagram. The code selects the links to plot based on a transition area threshold and sets the link colors and values. It creates a Sankey diagram and writes the figure to a PDF file.
+
 ## License
 
 (Provide information on the licensing of the code)
