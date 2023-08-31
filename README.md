@@ -43,6 +43,8 @@ The code then converts the Köppen-Geiger maps from netCDF files to geoTIFF file
 
 ### `climatologies_step4_validation.py`
 
+The script computes the areas covered by major Köppen-Geiger classes and transitions and it loads station data and computes Köppen-Geiger classes. Then it counts the number of stations for each provider. It then computes the classification accuracy for each historical period for both the 30 Köppen-Geiger classes and the major classes by loading the global Köppen-Geiger map for each period from a netCDF file, computing a map of major classes using the koppen_table data, converting the station latitude and longitude to row and column indices, and comparing the station class to the class in the Köppen-Geiger map at the corresponding location. The code stores the accuracy results in a data frame, along with the number of observations and confidence level of correct and incorrect classifications.
+
 ### `climatologies_step5_generate_figs_tables.py`
 
 ## License
