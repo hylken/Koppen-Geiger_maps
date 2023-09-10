@@ -1,11 +1,12 @@
+![Köppen-Geiger climate classification map for the global land surface for 1991–2020.](stats_figs_tables/climatologies/1991_2020_World_koppen_geiger_0p01.png)
 
 # Title
 
-This repository contains XXX for paper XXX.
+This repository contains the code for paper "High-resolution (1~km) K\"{o}ppen-Geiger maps for 1901--2099 based on constrained CMIP6 projections" published in Scientific Data.
 
 ## Climate Model Analysis
 
-Scripts related to processing the CMIP6 model data and assessing the sensitivities of the models.
+Scripts for processing CMIP6 model data and evaluating model sensitivities.
 
 ### `config_kaust.py`
 
@@ -25,7 +26,7 @@ This script generates a scatterplot illustrating the historical trend versus TCR
 
 ## Climatologies and Köppen-Geiger maps
 
-Scripts related to generating the final high-resolution precipitation and air temperature climatologies and the Köppen-Geiger maps for the historical and future periods and future scenarios.
+These scripts pertain to the generation of high-resolution precipitation and air temperature climatologies. They also produce Köppen-Geiger maps for both historical periods and future scenarios.
 
 ### `climatologies_step1_historical.py`
 
@@ -38,32 +39,15 @@ Next, the script generates high-resolution future climatologies by looping over 
 
 ### `climatologies_step3_resample_and_package.py`
 
-The script resamples high-resolution netCDF files to create low-resolution, upscaled versions and saves them as netCDF files. It loops over all files in the climatologies directory and checks if the file is an ensemble mean or standard deviation file or a Köppen-Geiger map file. For each file, it loops over the upscale map sizes specified in the configuration file and creates a new file name with the appropriate suffix. If the file is an ensemble mean or standard deviation file, the code resamples the precipitation and air temperature climatologies for each month and variable and saves the resampled data to a new netCDF file.
-
-The code then converts the Köppen-Geiger maps from netCDF files to geoTIFF files. It first creates a Köppen-Geiger colormap for the geoTIFF using the koppen_table data. The code then loops over all files in the climatologies directory and checks if the file is a Köppen-Geiger map file. For each file, it creates a new file name with the .tif extension and loads the kg_class data from the netCDF file. The code then saves the data to a geoTIFF file using the tools.write_to_geotiff function and the previously created colormap.
+For each high-resolution Köppen-Geiger map or climatology in netCDF format, this script produces a low-resolution, upscaled version. It then converts the Köppen-Geiger maps to geoTIFF format, including a color map. Finally, the script creates six zip files to facilitate data distribution.
 
 ### `climatologies_step4_validation.py`
 
-The script computes the areas covered by major Köppen-Geiger classes and transitions and it loads station data and computes Köppen-Geiger classes. Then it counts the number of stations for each provider. It then computes the classification accuracy for each historical period for both the 30 Köppen-Geiger classes and the major classes by loading the global Köppen-Geiger map for each period from a netCDF file, computing a map of major classes using the koppen_table data, converting the station latitude and longitude to row and column indices, and comparing the station class to the class in the Köppen-Geiger map at the corresponding location. The code stores the accuracy results in a data frame, along with the number of observations and confidence level of correct and incorrect classifications.
+This script calculates the areas covered by major Köppen-Geiger classes and the transitions between periods. It also computes the Köppen-Geiger classifications using station data. Subsequently, the script evaluates the classification accuracy for each historical period, considering both the 30 Köppen-Geiger classes and the major classes, by loading the global Köppen-Geiger map for each respective period.
 
 ### `climatologies_step5_generate_figs_tables.py`
 
-The script generates figures of Köppen-Geiger maps for periods and scenarios, creates a LaTeX table of classification accuracy, and generates Sankey diagrams for periods and scenarios. It defines a list of regions. It then loops over all files in the climatologies directory and checks if the file is a Köppen-Geiger map file. For each file, it loads the kg_class data from the netCDF file and generates a figure of the map for each region. The code reads the accuracy data from a CSV file and writes it to a .tex file as a LaTeX table. It then loops over the scenarios, loading area and transition data from CSV files and creating node and link lists for the Sankey diagram. The code selects the links to plot based on a transition area threshold and sets the link colors and values. It creates a Sankey diagram and writes the figure to a PDF file.
-
-## License
-
-(Provide information on the licensing of the code)
-
-## Usage
-
-## Dependencies
-
-# Overview
-
-# Data
-
-# System requirements
-
+This script generates figures of Köppen-Geiger maps for various periods and scenarios. Additionally, it creates a LaTeX table detailing the classification accuracy and constructs node and link lists for the Sankey diagrams. The script then produces figures of the Sankey diagrams for all periods and scenarios.
 
 # Instructions
 
@@ -72,12 +56,11 @@ Clone the repository:
 git clone https://github.com/hylken/Koppen-Geiger_maps
 cd Koppen-Geiger_maps
 ```
-Produce a configuration file with the correct paths and folders based on the provided template (`config.ini`).
+Produce a configuration file with the correct paths and folders based on the provided template (`config_kaust.py`).
 
 Create the environment and install the packages as follows:
 ```
 conda update conda
-conda install -n base -c conda-forge mamba
-mamba create -n Koppen-Geiger_maps -c conda-forge scipy pandas numpy netcdf4 matplotlib pymatreader statsmodels adjusttext seaborn scikit-image basemap rasterio pyshp plotly python-kaleido
-pip install pyshp
+conda config --set solver libmamba
+conda create -n Koppen-Geiger_maps -c conda-forge scipy pandas numpy netcdf4 matplotlib pymatreader statsmodels adjusttext seaborn scikit-image basemap rasterio pyshp plotly python-kaleido
 ```
