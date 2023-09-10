@@ -135,7 +135,8 @@ def main():
                 
                 
                 #==============================================================================
-                #   Generate high-res future climatologies
+                #   Generate high-resolution future climatologies, ensemble mean and standard 
+                #   deviation, and the final Koppen-Geiger maps
                 #==============================================================================
                 
                 # Loop over variables and months
