@@ -1,10 +1,10 @@
+# High-resolution (1 km) Köppen-Geiger maps for 1901–2099 based on constrained CMIP6 projections
+
+This repository contains the code for paper "High-resolution (1 km) Köppen-Geiger maps for 1901–2099 based on constrained CMIP6 projections" published in Scientific Data.
+
 ![Köppen-Geiger climate classification map for the global land surface for 1991–2020.](stats_figs_tables/climatologies/1991_2020_World_koppen_geiger_0p01.png)
 
-# Title
-
-This repository contains the code for paper "High-resolution (1~km) K\"{o}ppen-Geiger maps for 1901--2099 based on constrained CMIP6 projections" published in Scientific Data.
-
-## Climate Model Analysis
+## Part 1: Climate Model Analysis
 
 Scripts for processing CMIP6 model data and evaluating model sensitivities.
 
@@ -24,7 +24,7 @@ This script loads the HadCRUT observed air temperature ensemble data, estimates 
 
 This script generates a scatterplot illustrating the historical trend versus TCR for the paper. It also produces a .tex table detailing the number of ensemble members, trends, and sensitivities. The script also prints the mean global warming for each scenario. Additionally, it creates box plots that display warming trends for the land surface under different scenarios, considering both all models and a the screened subset of models. Finally, it produces figures depicting projected global mean changes in temperature and precipitation, along with their associated uncertainties.
 
-## Climatologies and Köppen-Geiger maps
+## Part 2: Climatologies and Köppen-Geiger maps
 
 These scripts pertain to the generation of high-resolution precipitation and air temperature climatologies. They also produce Köppen-Geiger maps for both historical periods and future scenarios.
 
@@ -33,6 +33,7 @@ These scripts pertain to the generation of high-resolution precipitation and air
 This script loads the CRU air temperature and GPCC precipitation datasets. It then iterates over each combination of station-based air temperature and precipitation climatic datasets, generating adjusted high-resolution climatologies for each historical period using change offsets and factors derived from the CRU and GPCC data. Lastly, based on the ensemble of adjusted station-based climatologies, the script calculates final climatologies, their associated uncertainty estimates, and produces Köppen-Geiger maps for the historical periods.
 
 ### `climatologies_step2_future.py`
+
 This script processes climate model data to generate high-resolution future climatologies. It first loads the climate model data and averages it over ensemble members. The script then loops over the variables and ensemble members, creating a dictionary to store the data. For each variable and ensemble member, it checks if both historical and projection data exist. If not, it skips processing. The script then loads the historical and projection data from npz files and stores it in the dictionary. It checks the temporal completeness of the data, and if it is incomplete, it sets the data to NaN. The script then computes the average over all ensemble members for each variable.
 
 Next, the script generates high-resolution future climatologies by looping over the variables and months, loading a high-resolution historic reference climatology for each variable and month. It produces a change map to adjust the climatology to the target period and month based on the monthly climate model data. The code then saves the temporally adjusted, high-resolution future climatology to an nc file. After processing all models, the script computes the ensemble mean and standard deviation and the Köppen-Geiger classification maps and uncertainty.
