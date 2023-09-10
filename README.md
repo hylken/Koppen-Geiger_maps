@@ -1,16 +1,10 @@
 # High-resolution (1 km) Köppen-Geiger maps for 1901–2099 based on constrained CMIP6 projections
 
-This repository contains the code for paper "High-resolution (1 km) Köppen-Geiger maps for 1901–2099 based on constrained CMIP6 projections" published in Scientific Data.
-
-![Köppen-Geiger climate classification map for the global land surface for 1991–2020.](stats_figs_tables/climatologies/1991_2020_World_koppen_geiger_0p01.png)
+This repository contains the code for the paper titled "High-resolution (1 km) Köppen-Geiger maps for 1901–2099 based on constrained CMIP6 projections," published in Scientific Data.
 
 ## Part 1: Climate Model Analysis
 
 Scripts for processing CMIP6 model data and evaluating model sensitivities.
-
-### `config_kaust.py`
-
-The configuration file specifies various settings for processing data. It sets the map size, upscale map sizes, historical and future periods, and version. It specifies whether to skip existing files and the datasets to use for precipitation and temperature data. The file also sets the output, statistics, maps, raw data, processed data, and station data folder paths. It defines the variables to process, including their names, units, and change limits. The file specifies whether to perform synchronization and the synchronization command to use
 
 ### `climate_model_step1_data_to_npz.py`
 
