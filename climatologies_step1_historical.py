@@ -19,6 +19,7 @@ import warnings
 from skimage.transform import resize
 import h5py
 import gc
+import tables
 
 def main():
     
@@ -148,11 +149,8 @@ def main():
                         del reference_map
                         
                         # Attempt to fix random "There are 150 HDF5 objects open!" errors
-                        try:
-                            del f
-                        except:
-                            pass
-
+                        tables.file._open_files.close_all()
+                
                 print("Time elapsed is "+str(time.time()-t0)+" sec")
                 
                 gc.collect()
