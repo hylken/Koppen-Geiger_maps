@@ -18,6 +18,7 @@ from datetime import datetime
 from netCDF4 import Dataset
 import warnings
 import gc
+import tables
 
 def main():
 
@@ -172,7 +173,10 @@ def main():
                         # Save temporally-adjusted high-res future climatology
                         tools.write_to_netcdf_3d(ncout,change['target_map'],config['vars'][vv][1],config['vars'][vv][2],month,1)
                         del data
-                
+
+                        # Attempt to fix random "There are 150 HDF5 objects open!" errors
+                        tables.file._open_files.close_all()
+                                
                 del sim_data    
                 
                 print("Time elapsed is "+str(time.time()-t0)+" sec")
