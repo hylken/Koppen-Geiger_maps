@@ -1,6 +1,6 @@
 # High-resolution (1 km) Köppen-Geiger maps for 1901–2099 based on constrained CMIP6 projections
 
-This repository contains the code for the paper titled "High-resolution (1 km) Köppen-Geiger maps for 1901–2099 based on constrained CMIP6 projections," published in Scientific Data.
+This repository contains the code for the paper titled [High-resolution (1 km) Köppen-Geiger maps for 1901–2099 based on constrained CMIP6 projections](https://doi.org/10.1038/s41597-023-02549-6), published in Scientific Data.
 
 ## Part 1: Climate Model Analysis
 

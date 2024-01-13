@@ -109,18 +109,22 @@ def main():
                         
                         # Load high-resolution reference climatology
                         if varname=='P':
-                            f = h5py.File(os.path.join(config['folder_maps'],Pdataset+'_Pmean_'+str(month).zfill(2)+'.mat'))
+                            filepath = os.path.join(config['folder_maps'],Pdataset+'_Pmean_'+str(month).zfill(2)+'.mat')
+                            print('Loading '+filepath)
+                            f = h5py.File(filepath)
                             reference_map = resize(np.transpose(np.array(f['DATA'],dtype=np.single)),\
                                 config['mapsize'],order=1,mode='constant',anti_aliasing=False)
                             f.close()
                             reference_period = config['Pdatasets'][Pdataset]
                         elif varname=='Temp':
-                            f = h5py.File(os.path.join(config['folder_maps'],Tdataset+'_Tmean_'+str(month).zfill(2)+'.mat'))
+                            filepath = os.path.join(config['folder_maps'],Tdataset+'_Tmean_'+str(month).zfill(2)+'.mat')
+                            print('Loading '+filepath)
+                            f = h5py.File(filepath)
                             reference_map = resize(np.transpose(np.array(f['DATA'],dtype=np.single)),\
                                 config['mapsize'],order=1,mode='constant',anti_aliasing=False)
                             f.close()
                             reference_period = config['Tdatasets'][Tdataset]
-                        
+                                 
                         # Produce change map to adjust climatology to period in 
                         # question based on the monthly observed climate data                            
                         change = tools.produce_change_map(
@@ -139,8 +143,15 @@ def main():
                             raise ValueError('Only NaNs, something is wrong')
                         
                         # Save temporally-adjusted, high-resolution climatology
+                        print('Writing to '+ncout)
                         tools.write_to_netcdf_3d(ncout,change['target_map'],config['vars'][vv][1],config['vars'][vv][2],month,1)
                         del reference_map
+                        
+                        # Attempt to fix random "There are 150 HDF5 objects open!" errors
+                        try:
+                            del f
+                        except:
+                            pass
 
                 print("Time elapsed is "+str(time.time()-t0)+" sec")
                 
