@@ -187,14 +187,14 @@ def main():
             print('-------------------------------------------------------------------------------') 
             print(str(period_future[0])+'-'+str(period_future[1])+' '+scenario+' ensemble mean and std')
             t0 = time.time()
-            tools.compute_ens_mean_std(out_dir,config['vars'],config['mapsize'],2000,True)
+            tools.compute_ens_mean_std(out_dir,config['vars'],config['mapsize'],3600,True)
             print("Time elapsed is "+str(time.time()-t0)+" sec") 
         
     
             print('-------------------------------------------------------------------------------') 
             print(str(period_future[0])+'-'+str(period_future[1])+' '+scenario+' KG classification and uncertainty')
             t0 = time.time()
-            tools.compute_kg_maps(out_dir,koppen_table,config['mapsize'],1000,True)
+            tools.compute_kg_maps(out_dir,koppen_table,config['mapsize'],3600,True)
             print("Time elapsed is "+str(time.time()-t0)+" sec") 
             
     pdb.set_trace()
