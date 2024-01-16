@@ -31,7 +31,7 @@ def main():
     np.set_printoptions(suppress=True)
     config = tools.load_config(sys.argv[1])
     koppen_table = pd.read_csv(os.path.join('assets','koppen_table.csv'))
-
+    
     # Loop over periods
     for period_historical in config['periods_historical']:
         out_dir = os.path.join(config['folder_out'],'climatologies',str(period_historical[0])+'_'+str(period_historical[1]))
