@@ -152,7 +152,7 @@ def main():
                     
                         # Load high-res historic reference climatology
                         period_historic = config['periods_historical'][-1]
-                        suffix = str(180/config['mapsize'][0]).replace('.','p')
+                        suffix = str(180/config['mapsize'][0]).replace('.','p')[:10]
                         dset = Dataset(os.path.join(config['folder_out'],'climatologies', \
                             str(period_historic[0])+'_'+str(period_historic[1]),'ensemble_mean_'+suffix+'.nc'))
                         data = np.array(dset.variables[config['vars'][vv][1]][month-1,:,:],dtype=np.single)
