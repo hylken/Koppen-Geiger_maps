@@ -20,6 +20,7 @@ from skimage.transform import resize
 import h5py
 import gc
 import tables
+import matplotlib.pyplot as plt
 
 def main():
     
@@ -31,6 +32,12 @@ def main():
     np.set_printoptions(suppress=True)
     config = tools.load_config(sys.argv[1])
     koppen_table = pd.read_csv(os.path.join('assets','koppen_table.csv'))
+    
+    # Create land-sea mask
+    filepath = os.path.join(config['folder_maps'],'WorldClim_V21_Pmean_01.mat')
+    f = h5py.File(filepath)
+    mask = np.isnan(np.transpose(np.array(f['DATA'],dtype=np.single)))
+    f.close()
     
     # Loop over periods
     for period_historical in config['periods_historical']:
@@ -113,16 +120,18 @@ def main():
                             filepath = os.path.join(config['folder_maps'],Pdataset+'_Pmean_'+str(month).zfill(2)+'.mat')
                             print('Loading '+filepath)
                             f = h5py.File(filepath)
-                            reference_map = resize(np.transpose(np.array(f['DATA'],dtype=np.single)),\
-                                config['mapsize'],order=1,mode='constant',anti_aliasing=False)
+                            data = np.transpose(np.array(f['DATA'],dtype=np.single))
+                            data[mask] = np.NaN
+                            reference_map = resize(data,config['mapsize'],order=1,mode='constant',anti_aliasing=False)
                             f.close()
                             reference_period = config['Pdatasets'][Pdataset]
                         elif varname=='Temp':
                             filepath = os.path.join(config['folder_maps'],Tdataset+'_Tmean_'+str(month).zfill(2)+'.mat')
                             print('Loading '+filepath)
                             f = h5py.File(filepath)
-                            reference_map = resize(np.transpose(np.array(f['DATA'],dtype=np.single)),\
-                                config['mapsize'],order=1,mode='constant',anti_aliasing=False)
+                            data = np.transpose(np.array(f['DATA'],dtype=np.single))
+                            data[mask] = np.NaN
+                            reference_map = resize(data,config['mapsize'],order=1,mode='constant',anti_aliasing=False)
                             f.close()
                             reference_period = config['Tdatasets'][Tdataset]
                                  
@@ -161,14 +170,14 @@ def main():
         print('-------------------------------------------------------------------------------') 
         print(str(period_historical[0])+'-'+str(period_historical[1])+' ensemble mean and std')
         t0 = time.time()
-        tools.compute_ens_mean_std(out_dir,config['vars'],config['mapsize'],3600,True)
+        tools.compute_ens_mean_std(out_dir,config['vars'],config['mapsize'],3600,True,mask)
         print("Time elapsed is "+str(time.time()-t0)+" sec") 
               
               
         print('-------------------------------------------------------------------------------') 
         print(str(period_historical[0])+'-'+str(period_historical[1])+' KG classification and uncertainty')
         t0 = time.time()
-        tools.compute_kg_maps(out_dir,koppen_table,config['mapsize'],3600,True)
+        tools.compute_kg_maps(out_dir,koppen_table,config['mapsize'],3600,True,mask)
         print("Time elapsed is "+str(time.time()-t0)+" sec") 
         
     pdb.set_trace()

@@ -31,7 +31,12 @@ def main():
     config = tools.load_config(sys.argv[1])
     koppen_table = pd.read_csv(os.path.join('assets','koppen_table.csv'))
     scenarios = ['ssp119','ssp126','ssp245','ssp370','ssp434','ssp460','ssp585']
-    #scenarios = ['ssp460','ssp585'] 
+    
+    # Create land-sea mask
+    filepath = os.path.join(config['folder_maps'],'WorldClim_V21_Pmean_01.mat')
+    f = h5py.File(filepath)
+    mask = np.isnan(np.transpose(np.array(f['DATA'],dtype=np.single)))
+    f.close()
     
     # Loop over periods and scenarios
     for period_future in config['periods_future']:
@@ -187,14 +192,14 @@ def main():
             print('-------------------------------------------------------------------------------') 
             print(str(period_future[0])+'-'+str(period_future[1])+' '+scenario+' ensemble mean and std')
             t0 = time.time()
-            tools.compute_ens_mean_std(out_dir,config['vars'],config['mapsize'],3600,True)
+            tools.compute_ens_mean_std(out_dir,config['vars'],config['mapsize'],3600,True,mask)
             print("Time elapsed is "+str(time.time()-t0)+" sec") 
         
     
             print('-------------------------------------------------------------------------------') 
             print(str(period_future[0])+'-'+str(period_future[1])+' '+scenario+' KG classification and uncertainty')
             t0 = time.time()
-            tools.compute_kg_maps(out_dir,koppen_table,config['mapsize'],3600,True)
+            tools.compute_kg_maps(out_dir,koppen_table,config['mapsize'],3600,True,mask)
             print("Time elapsed is "+str(time.time()-t0)+" sec") 
             
     pdb.set_trace()

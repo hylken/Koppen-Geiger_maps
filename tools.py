@@ -370,7 +370,7 @@ def produce_change_map(reference_map,reference_period,monthly_data, \
     return {'target_map':target_map,'change_map':change_map}
     
     
-def compute_ens_mean_std(ens_dir,vars,mapsize,subsetsize,skip_existing):
+def compute_ens_mean_std(ens_dir,vars,mapsize,subsetsize,skip_existing,mask):
     """This function computes the ensemble mean and standard deviation of a 
     set of netCDF files in a given directory. The input 'ens_dir' is the 
     directory containing the netCDF files, 'vars' is a list of variable 
@@ -385,7 +385,7 @@ def compute_ens_mean_std(ens_dir,vars,mapsize,subsetsize,skip_existing):
     files.
     """
     
-    suffix = str(180/mapsize[0]).replace('.','p')
+    suffix = str(180/mapsize[0]).replace('.','p')[:10]
     
     if (os.path.isfile(os.path.join(ens_dir,'ensemble_mean_'+suffix+'.nc'))) \
             & (os.path.isfile(os.path.join(ens_dir,'ensemble_std_'+suffix+'.nc'))) \
@@ -412,13 +412,15 @@ def compute_ens_mean_std(ens_dir,vars,mapsize,subsetsize,skip_existing):
                     dset = Dataset(files[ii])
                     data_mems[:,:,ii] = np.array(dset.variables[vars[vv][1]][month-1,:,substart:subend],dtype=np.single)
                     dset.close()
-                data_mean[:,substart:subend] = np.mean(data_mems,axis=2)
-                data_std[:,substart:subend] = np.std(data_mems,axis=2)
+                data_mean[:,substart:subend] = np.nanmean(data_mems,axis=2)
+                data_std[:,substart:subend] = np.nanstd(data_mems,axis=2)
+            data_mean[mask] = np.NaN
+            data_std[mask] = np.NaN
             write_to_netcdf_3d(ncoutmean,data_mean,vars[vv][1],vars[vv][2],month,1)
             write_to_netcdf_3d(ncoutstd,data_std,vars[vv][1],vars[vv][2],month,1)
 
 
-def compute_kg_maps(ens_dir,koppen_table,mapsize,subsetsize,skip_existing):
+def compute_kg_maps(ens_dir,koppen_table,mapsize,subsetsize,skip_existing,mask):
     """Computes the Koppen-Geiger map of a given ensemble 
     directory using a Koppen-Geiger table. It takes the ensemble directory, 
     Koppen-Geiger table, map size, subset size, and a flag for skipping 
@@ -429,7 +431,7 @@ def compute_kg_maps(ens_dir,koppen_table,mapsize,subsetsize,skip_existing):
     maps to a netCDF file.
     """
 
-    suffix = str(180/mapsize[0]).replace('.','p')
+    suffix = str(180/mapsize[0]).replace('.','p')[:10]
     
     if (os.path.isfile(os.path.join(ens_dir,'koppen_geiger_'+suffix+'.nc'))) \
             & (skip_existing==True):
@@ -455,8 +457,10 @@ def compute_kg_maps(ens_dir,koppen_table,mapsize,subsetsize,skip_existing):
             data_P = np.array(dset.variables['precipitation'][:,:,substart:subend],dtype=np.single)
             dset.close()
             kg_class_ens[:,:,ii] = koppen_geiger(data_T,data_P,koppen_table)['Class']
-        kg_class[:,substart:subend] = mode(kg_class_ens,axis=2)
-        kg_confidence[:,substart:subend] = confidence(kg_class_ens,axis=2).astype(np.int8)
+        kg_class[:,substart:subend] = mode(kg_class_ens,axis=2,nanint=0)
+        kg_confidence[:,substart:subend] = confidence(kg_class_ens,axis=2,nanint=0).astype(np.int8)
+    kg_class[mask] = 0
+    kg_confidence[mask] = 0
     write_to_netcdf_2d(ncout,kg_class,'kg_class','',1)
     write_to_netcdf_2d(ncout,kg_confidence,'kg_confidence','%',1)
     
@@ -474,7 +478,7 @@ def periods_to_datetimes(periods):
     return datetimes
     
     
-def mode(ndarray, axis=0):
+def mode(ndarray, axis=0, nanint=0):
     """Computes the mode along an axis of a multi-dimensional 
     array. It takes a multi-dimensional array and an axis as inputs, and 
     returns an array of the mode along the given axis. Replaces 
@@ -482,16 +486,16 @@ def mode(ndarray, axis=0):
     times slower than Matlab.
     """
     
-    return np.apply_along_axis(lambda x: np.bincount(x).argmax(), axis=axis, arr=ndarray)
+    return np.apply_along_axis(lambda x: modefun(x, nanint), axis=axis, arr=ndarray)
 
 
-def confidence(ndarray, axis=0):
+def confidence(ndarray, axis=0, nanint=0):
     """This function computes the fraction of the array equal to the mode. 
     It takes a multi-dimensional array and an axis as inputs, and returns an 
     array of the confidence along the given axis. 
     """
     
-    return np.apply_along_axis(lambda x: 100*np.bincount(x).max()/len(x), axis=axis, arr=ndarray)
+    return np.apply_along_axis(lambda x: confun(x, nanint), axis=axis, arr=ndarray)
 
 
 def modefun(x,nanint):
@@ -504,6 +508,18 @@ def modefun(x,nanint):
         return nanint
     else:
         return np.bincount(x).argmax()
+
+
+def confun(x,nanint):
+    """Computes the confidence percentage for 1-dimensional arrays. nanint sets the NaN value 
+    for integer arrays. 
+    """
+    
+    x = x[x!=nanint]
+    if len(x)==0:
+        return nanint
+    else:
+        return 100*np.bincount(x).max()/len(x)
         
  
 def mapresize(A,newshape,measure='mean',nantol=0.75,nanint=0):

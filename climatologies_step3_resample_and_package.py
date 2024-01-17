@@ -145,7 +145,7 @@ def main():
     # Create zip file with precipitation and air temperature climatologies
     #for mapsize in config['upscale_mapsizes']+[config['mapsize']]:
     for mapsize in [config['mapsize']]:
-        suffix = str(180/mapsize[0]).replace('.','p')   
+        suffix = str(180/mapsize[0]).replace('.','p')[:10]
         t0 = time.time()
         zip_file = os.path.join(config['folder_out'],'climatologies','climate_data_'+suffix+'.zip')
         folder = os.path.join(config['folder_out'],'climatologies')
