@@ -76,6 +76,7 @@ def main():
         for ii in np.arange(len(files)):
             dset = Dataset(files[ii])
             precip = np.array(dset.variables['precip'][:],dtype=np.single)
+            dset.close()
             precip[precip<0] = np.NaN
             dates = pd.date_range(
                 start=datetime(int(os.path.basename(files[ii]).split('_')[4]),1,1),
@@ -159,7 +160,11 @@ def main():
                         
                         # Attempt to fix random "There are 150 HDF5 objects open!" errors
                         tables.file._open_files.close_all()
-                
+                        try:
+                            del f
+                        except:
+                            pass
+                            
                 print("Time elapsed is "+str(time.time()-t0)+" sec")
                 
                 gc.collect()
