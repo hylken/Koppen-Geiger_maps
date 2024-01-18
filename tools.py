@@ -232,9 +232,9 @@ def write_to_netcdf_3d(file, data, varname, varunits, month, least_sig_dig):
     
     if os.path.isfile(file)==False:
 
-        res = 360/float(data.shape[1])
-        lon = np.arange(data.shape[1], dtype=np.single)*res - 180.0 + res/2
-        lat = 90-np.arange(data.shape[0], dtype=np.single)*res - res/2
+        res = np.around(360/float(data.shape[1]),7)
+        lon = np.arange(-180+res/2,180-res/2,res)
+        lat = np.arange(90-res/2,-90+res/2,-res)
         
         if os.path.isdir(os.path.dirname(file))==False:
             os.makedirs(os.path.dirname(file))

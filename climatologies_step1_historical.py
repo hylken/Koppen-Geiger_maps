@@ -122,8 +122,8 @@ def main():
                             print('Loading '+filepath)
                             f = h5py.File(filepath)
                             data = np.transpose(np.array(f['DATA'],dtype=np.single))
-                            data[mask] = np.NaN
                             reference_map = resize(data,config['mapsize'],order=1,mode='constant',anti_aliasing=False)
+                            reference_map[mask] = np.NaN
                             f.close()
                             reference_period = config['Pdatasets'][Pdataset]
                         elif varname=='Temp':
@@ -131,8 +131,8 @@ def main():
                             print('Loading '+filepath)
                             f = h5py.File(filepath)
                             data = np.transpose(np.array(f['DATA'],dtype=np.single))
-                            data[mask] = np.NaN
                             reference_map = resize(data,config['mapsize'],order=1,mode='constant',anti_aliasing=False)
+                            reference_map[mask] = np.NaN
                             f.close()
                             reference_period = config['Tdatasets'][Tdataset]
                                  
