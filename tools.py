@@ -246,17 +246,17 @@ def write_to_netcdf_3d(file, data, varname, varunits, month, least_sig_dig):
         ncfile.createDimension('lat', len(lat))
         ncfile.createDimension('time', 12)
 
-        ncfile.createVariable('lon', 'f4', ('lon',))
+        ncfile.createVariable('lon', 'f8', ('lon',))
         ncfile.variables['lon'][:] = lon
         ncfile.variables['lon'].units = 'degrees_east'
         ncfile.variables['lon'].long_name = 'longitude'
 
-        ncfile.createVariable('lat', 'f4', ('lat',))
+        ncfile.createVariable('lat', 'f8', ('lat',))
         ncfile.variables['lat'][:] = lat
         ncfile.variables['lat'].units = 'degrees_north'
         ncfile.variables['lat'].long_name = 'latitude'
 
-        ncfile.createVariable('time', 'f4', 'time')
+        ncfile.createVariable('time', 'f8', 'time')
         ncfile.variables['time'][:] = np.arange(1,13)
         ncfile.variables['time'].units = 'month'
         ncfile.variables['time'].long_name = 'month of year'
@@ -300,12 +300,12 @@ def write_to_netcdf_2d(file, data, varname, varunits, least_sig_dig):
         ncfile.createDimension('lon', len(lon))
         ncfile.createDimension('lat', len(lat))
 
-        ncfile.createVariable('lon', 'f4', ('lon',))
+        ncfile.createVariable('lon', 'f8', ('lon',))
         ncfile.variables['lon'][:] = lon
         ncfile.variables['lon'].units = 'degrees_east'
         ncfile.variables['lon'].long_name = 'longitude'
 
-        ncfile.createVariable('lat', 'f4', ('lat',))
+        ncfile.createVariable('lat', 'f8', ('lat',))
         ncfile.variables['lat'][:] = lat
         ncfile.variables['lat'].units = 'degrees_north'
         ncfile.variables['lat'].long_name = 'latitude'

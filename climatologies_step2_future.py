@@ -181,7 +181,11 @@ def main():
 
                         # Attempt to fix random "There are 150 HDF5 objects open!" errors
                         tables.file._open_files.close_all()
-                                
+                        try:
+                            del f
+                        except:
+                            pass
+                            
                 del sim_data    
                 
                 print("Time elapsed is "+str(time.time()-t0)+" sec")
