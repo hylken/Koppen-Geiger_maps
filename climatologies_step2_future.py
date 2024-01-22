@@ -19,6 +19,7 @@ from netCDF4 import Dataset
 import warnings
 import gc
 import tables
+import h5py
 
 def main():
 
