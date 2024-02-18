@@ -270,7 +270,6 @@ def write_to_netcdf_3d(file, data, varname, varunits, month, least_sig_dig):
             chunksizes=(1,int(np.minimum(data.shape[0],200)),int(np.minimum(data.shape[1],200)),),\
             fill_value=-9999, least_significant_digit=least_sig_dig)
     
-    pdb.set_trace()
     ncfile.variables[varname][month-1,:,:] = data
     ncfile.variables[varname].units = varunits
 
