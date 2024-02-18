@@ -40,7 +40,7 @@ def main():
     # Loop over all files and convert to netCDF
     for root, dirs, files in os.walk(os.path.join(config['folder_out'],'climatologies')):
         for file in files:
-            suffix_full = str(180/config['mapsize'][0]).replace('.','p')
+            suffix_full = str(180/config['mapsize'][0]).replace('.','p')[:10]
             for upscale_mapsize in config['upscale_mapsizes']:
                 suffix_resample = str(180/upscale_mapsize[0]).replace('.','p')                
                 
@@ -110,8 +110,8 @@ def main():
                 dset.close()
                 tools.write_to_geotiff(ncout,data,cmap,0)
                 print("Time elapsed is "+str(time.time()-t0)+" sec")
-
-
+   
+    
     #==============================================================================
     #   Make zip files
     #==============================================================================
@@ -143,8 +143,7 @@ def main():
     print("Time elapsed is "+str(time.time()-t0)+" sec")
 
     # Create zip file with precipitation and air temperature climatologies
-    #for mapsize in config['upscale_mapsizes']+[config['mapsize']]:
-    for mapsize in [config['mapsize']]:
+    for mapsize in config['upscale_mapsizes']+[config['mapsize']]:
         suffix = str(180/mapsize[0]).replace('.','p')[:10]
         t0 = time.time()
         zip_file = os.path.join(config['folder_out'],'climatologies','climate_data_'+suffix+'.zip')
