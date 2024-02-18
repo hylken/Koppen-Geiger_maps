@@ -232,9 +232,9 @@ def write_to_netcdf_3d(file, data, varname, varunits, month, least_sig_dig):
     
     if os.path.isfile(file)==False:
 
-        res = np.around(360/float(data.shape[1]),7)
-        lon = np.arange(-180+res/2,180-res/2,res)
-        lat = np.arange(90-res/2,-90+res/2,-res)
+        res = np.around(360/float(data.shape[1]),decimals=7)
+        lon = np.arange(-180+res/2,180-res/2.00000001,res)
+        lat = np.arange(90-res/2,-90+res/2.00000001,-res)
         
         if os.path.isdir(os.path.dirname(file))==False:
             os.makedirs(os.path.dirname(file))
@@ -269,7 +269,8 @@ def write_to_netcdf_3d(file, data, varname, varunits, month, least_sig_dig):
             zlib=True, complevel=1,\
             chunksizes=(1,int(np.minimum(data.shape[0],200)),int(np.minimum(data.shape[1],200)),),\
             fill_value=-9999, least_significant_digit=least_sig_dig)
-
+    
+    pdb.set_trace()
     ncfile.variables[varname][month-1,:,:] = data
     ncfile.variables[varname].units = varunits
 
@@ -287,9 +288,9 @@ def write_to_netcdf_2d(file, data, varname, varunits, least_sig_dig):
     
     if os.path.isfile(file)==False:
 
-        res = np.around(360/float(data.shape[1]),7)
-        lon = np.arange(-180+res/2,180-res/2,res)
-        lat = np.arange(90-res/2,-90+res/2,-res)
+        res = np.around(360/float(data.shape[1]),decimals=7)
+        lon = np.arange(-180+res/2,180-res/2.00000001,res)
+        lat = np.arange(90-res/2,-90+res/2.00000001,-res)
         
         if os.path.isdir(os.path.dirname(file))==False:
             os.makedirs(os.path.dirname(file))
