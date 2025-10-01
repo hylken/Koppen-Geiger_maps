@@ -143,7 +143,7 @@ def koppen_geiger(T,P,koppen_table):
     #Pthresh[Pw*2.333>Ps] = 2*MAT[Pw*2.333>Ps]
     #Pthresh[Ps*2.333>Pw] = 2*MAT[Ps*2.333>Pw]+28
     
-    # Corrected for V2 of Beck et al. (2023) maps
+    # Corrected for V3 of Beck et al. (2023) maps
     # Threshold P
     Pthresh = 2*MAT+14
     Pthresh[Pw>Ps*2.333] = 2*MAT[Pw>Ps*2.333]

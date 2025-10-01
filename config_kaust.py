@@ -6,7 +6,7 @@ config = {
     'skip_existing': True,
     'Pdatasets': {'WorldClim_V21': (1970,2000), 'CHPclim_V1': (1980,2009), 'CHELSA_V12': (1979,2013), 'CHELSA_V21': (1981,2010)},
     'Tdatasets': {'WorldClim_V21': (1970,2000), 'CHELSA_V12': (1979,2013), 'CHELSA_V21': (1981,2010)},
-    'folder_out': '/mnt/datawaha/hyex/beckhe/RESEARCH/Paper_30_New_KG_maps',
+    'folder_out': '/mnt/datawaha/hyex/beckhe/RESEARCH/Paper_30_New_KG_maps_V3',
     'folder_maps': '/mnt/datawaha/hyex/beckhe/RESEARCH/Data/MAPS', 
     'folder_dataraw': '/mnt/datawaha/hyex/beckhe/DATA_RAW',
     'folder_dataproc': '/mnt/datawaha/hyex/beckhe/DATA_PROCESSED',
