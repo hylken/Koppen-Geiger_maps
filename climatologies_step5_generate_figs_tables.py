@@ -30,6 +30,7 @@ def main():
     
     np.set_printoptions(suppress=True)
     config = tools.load_config(sys.argv[1])
+    script_name = os.path.basename(sys.argv[0]).replace('.py', '')
     plt.rcParams["font.family"] = "Myriad pro"
     
     koppen_table = pd.read_csv(os.path.join('assets','koppen_table.csv'))
@@ -51,23 +52,36 @@ def main():
         ]
         
     # Create output folder if it doesn't exist
-    if os.path.isdir(os.path.join(config['folder_stats'],'climatologies'))==False:
-        os.makedirs(os.path.join(config['folder_stats'],'climatologies'))        
+    if os.path.isdir(os.path.join('.',script_name))==False:
+        os.makedirs(os.path.join('.',script_name))        
     
-    # Loop over all files
-    for root, dirs, files in os.walk(os.path.join(config['folder_out'],'climatologies')):
+    folders = [
+        os.path.join(config['folder_out'], 'climatologies_step1_historical'),
+        os.path.join(config['folder_out'], 'climatologies_step2_future')
+    ]
+
+    subfolders = [
+        os.path.join(parent, name)
+        for parent in folders
+        for name in os.listdir(parent)
+        if os.path.isdir(os.path.join(parent, name))
+    ]
+
+    # Loop over all files and convert to netCDF
+    for subfolder in subfolders:
+        files = glob.glob(os.path.join(subfolder,'*.nc'))
         for file in files:
             suffix = str(180/config['mapsize'][0]).replace('.','p')
-            if file=='koppen_geiger_'+suffix+'.nc': 
+            if file.endswith('koppen_geiger_'+suffix+'.nc'): 
                 t0 = time.time()
                 print('Producing figures of '+file)
-                dset = Dataset(os.path.join(root,file))
+                dset = Dataset(file)
                 data = np.array(dset.variables['kg_class'][:]).astype(np.single)
                 dset.close()
-                data[data==0] = np.NaN
+                data[data==0] = np.nan
                 for rr in np.arange(len(regions)):
-                    fname = os.path.join(root,regions[rr][0]+'_'+file).replace('.nc','.png').replace(os.path.join(config['folder_out'],'climatologies'),'').replace(os.path.sep,'_')[1:]
-                    figout = os.path.join(config['folder_stats'],'climatologies',fname)
+                    fname = regions[rr][0]+'_'+file).replace('.nc','.png').replace(os.path.sep,'_')
+                    figout = os.path.join('.',script_name,fname)
                     tools.plot_map(
                         data=data,
                         data_extent=(-180, 180, -90, 90),
@@ -88,9 +102,9 @@ def main():
     #   Generate LaTeX table of classification accuracy
     #==============================================================================
 
-    df_accuracy = pd.read_csv(os.path.join(config['folder_stats'],'validation','accuracy.csv'),index_col=0)
+    df_accuracy = pd.read_csv(os.path.join('.','climatologies_step4_validation','accuracy.csv'),index_col=0)
     
-    with open(os.path.join(config['folder_stats'],'validation','accuracy.tex'), 'w') as f:
+    with open(os.path.join('.',script_name,'accuracy.tex'), 'w') as f:
         for pp in np.arange(df_accuracy.shape[0]):
             f.write(df_accuracy.index[pp].replace('(','').replace(')','').replace(', ','--')+' & ')
             f.write('$'+"{:.0f}".format(df_accuracy.iloc[pp,0])+'$ & ')
@@ -121,9 +135,9 @@ def main():
     for scenario in scenarios:
     
         # Load area and transition data
-        df_kg_major_area_pct = pd.read_csv(os.path.join(config['folder_stats'],'climatologies',scenario+'_kg_major_area_pct.csv'),index_col=0)
-        df_kg_major_area_mm2 = pd.read_csv(os.path.join(config['folder_stats'],'climatologies',scenario+'_kg_major_area_mm2.csv'),index_col=0)
-        df_transitions_mm2 = pd.read_csv(os.path.join(config['folder_stats'],'climatologies',scenario+'_transitions_mm2.csv'),index_col=None)
+        df_kg_major_area_pct = pd.read_csv(os.path.join(config['folder_out'],'climatologies_step4_validation',scenario+'_kg_major_area_pct.csv'),index_col=0)
+        df_kg_major_area_mm2 = pd.read_csv(os.path.join(config['folder_out'],'climatologies_step4_validation',scenario+'_kg_major_area_mm2.csv'),index_col=0)
+        df_transitions_mm2 = pd.read_csv(os.path.join(config['folder_out'],'climatologies_step4_validation',scenario+'_transitions_mm2.csv'),index_col=None)
         if scenario=='ssp245':
             print('Pausing')
             pdb.set_trace()
@@ -174,7 +188,7 @@ def main():
             ))])
 
         # Write figure
-        outfile = os.path.join(config['folder_stats'],'climatologies',scenario+'_sankey.pdf')
+        outfile = os.path.join('.',script_name,scenario+'_sankey.pdf')
         fig.write_image(outfile)
         print(outfile)
         

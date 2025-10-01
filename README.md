@@ -55,5 +55,5 @@ Create the environment and install the packages as follows:
 ```
 conda update conda
 conda config --set solver libmamba
-conda create -n Koppen-Geiger_maps -c conda-forge scipy pandas numpy netcdf4 matplotlib pymatreader statsmodels adjusttext seaborn scikit-image basemap rasterio pyshp plotly python-kaleido
+conda create -n Koppen-Geiger_maps -c conda-forge -c ska scipy pandas numpy netcdf4 matplotlib pymatreader statsmodels adjusttext seaborn scikit-image basemap rasterio pyshp plotly python-kaleido ska::tables
 ```

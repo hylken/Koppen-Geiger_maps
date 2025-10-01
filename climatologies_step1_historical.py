@@ -19,7 +19,6 @@ import warnings
 from skimage.transform import resize
 import h5py
 import gc
-import tables
 import matplotlib.pyplot as plt
 
 def main():
@@ -31,6 +30,7 @@ def main():
 
     np.set_printoptions(suppress=True)
     config = tools.load_config(sys.argv[1])
+    script_name = os.path.basename(sys.argv[0]).replace('.py', '')
     koppen_table = pd.read_csv(os.path.join('assets','koppen_table.csv'))
     
     # Create land-sea mask
@@ -41,7 +41,7 @@ def main():
     
     # Loop over periods
     for period_historical in config['periods_historical']:
-        out_dir = os.path.join(config['folder_out'],'climatologies',str(period_historical[0])+'_'+str(period_historical[1]))
+        out_dir = os.path.join(config['folder_out'],script_name,str(period_historical[0])+'_'+str(period_historical[1]))
         if os.path.isdir(out_dir)==False:
             os.makedirs(out_dir)
         
@@ -55,11 +55,11 @@ def main():
         t0 = time.time()
         DatesMon = pd.date_range(start=datetime(1850,1,1), end=datetime(2021,12,31), freq='MS')
         obs_data = {}
-        obs_data['Temp'] = np.zeros((360,720,len(DatesMon)),dtype=np.single)*np.NaN
+        obs_data['Temp'] = np.zeros((360,720,len(DatesMon)),dtype=np.single)*np.nan
         filepath = glob.glob(os.path.join(config['folder_dataraw'], 'CRU_TS', 'cru_ts*.1901.20*.tmp.dat.nc'))[0]
         with Dataset(filepath) as dset:
             data = np.flip(np.array(dset.variables['tmp'][:],dtype=np.single),axis=1)
-            data[data>100] = np.NaN
+            data[data>100] = np.nan
             dates = pd.date_range(start=datetime(1901,1,1), end=datetime(2049,12,1), freq='MS')
             dates = dates[:data.shape[0]]
             for yy in np.arange(len(DatesMon)):
@@ -71,13 +71,13 @@ def main():
         print('-------------------------------------------------------------------------------')
         print('Loading monthly GPCC data') 
         t0 = time.time()
-        obs_data['P'] = np.zeros((720,1440,len(DatesMon)),dtype=np.single)*np.NaN
-        files = glob.glob(os.path.join(config['folder_dataraw'],'GPCC','*.nc'))
+        obs_data['P'] = np.zeros((720,1440,len(DatesMon)),dtype=np.single)*np.nan
+        files = glob.glob(os.path.join(config['folder_dataraw'],'GPCC','full_data_monthly_*.nc'))
         for ii in np.arange(len(files)):
             dset = Dataset(files[ii])
             precip = np.array(dset.variables['precip'][:],dtype=np.single)
             dset.close()
-            precip[precip<0] = np.NaN
+            precip[precip<0] = np.nan
             dates = pd.date_range(
                 start=datetime(int(os.path.basename(files[ii]).split('_')[4]),1,1),
                 end=datetime(int(os.path.basename(files[ii]).split('_')[5]),12,1),
@@ -123,7 +123,7 @@ def main():
                             f = h5py.File(filepath)
                             data = np.transpose(np.array(f['DATA'],dtype=np.single))
                             reference_map = resize(data,config['mapsize'],order=1,mode='constant',anti_aliasing=False)
-                            reference_map[mask] = np.NaN
+                            reference_map[mask] = np.nan
                             f.close()
                             reference_period = config['Pdatasets'][Pdataset]
                         elif varname=='Temp':
@@ -132,7 +132,7 @@ def main():
                             f = h5py.File(filepath)
                             data = np.transpose(np.array(f['DATA'],dtype=np.single))
                             reference_map = resize(data,config['mapsize'],order=1,mode='constant',anti_aliasing=False)
-                            reference_map[mask] = np.NaN
+                            reference_map[mask] = np.nan
                             f.close()
                             reference_period = config['Tdatasets'][Tdataset]
                                  
@@ -158,13 +158,6 @@ def main():
                         tools.write_to_netcdf_3d(ncout,change['target_map'],config['vars'][vv][1],config['vars'][vv][2],month,1)
                         del reference_map
                         
-                        # Attempt to fix random "There are 150 HDF5 objects open!" errors
-                        tables.file._open_files.close_all()
-                        try:
-                            del f
-                        except:
-                            pass
-                            
                 print("Time elapsed is "+str(time.time()-t0)+" sec")
                 
                 gc.collect()

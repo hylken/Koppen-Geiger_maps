@@ -137,11 +137,18 @@ def koppen_geiger(T,P,koppen_table):
     Thot = np.max(T,axis=0)
     Tcold = np.min(T,axis=0)
 
+    # Incorrect in Beck et al. (2018, 2023)
+    # Threshold P
+    #Pthresh = 2*MAT+14
+    #Pthresh[Pw*2.333>Ps] = 2*MAT[Pw*2.333>Ps]
+    #Pthresh[Ps*2.333>Pw] = 2*MAT[Ps*2.333>Pw]+28
+    
+    # Corrected for V2 of Beck et al. (2023) maps
     # Threshold P
     Pthresh = 2*MAT+14
-    Pthresh[Pw*2.333>Ps] = 2*MAT[Pw*2.333>Ps]
-    Pthresh[Ps*2.333>Pw] = 2*MAT[Ps*2.333>Pw]+28
-
+    Pthresh[Pw>Ps*2.333] = 2*MAT[Pw>Ps*2.333]
+    Pthresh[Ps>Pw*2.333] = 2*MAT[Ps>Pw*2.333]+28
+    
     # Classification of B classes
     B = MAP<10*Pthresh
     BW = (B) & (MAP<5*Pthresh)
@@ -152,7 +159,7 @@ def koppen_geiger(T,P,koppen_table):
     BSk = (BS) & (MAT<18)
 
     # Classification of A classes
-    A = (Tcold>=18) & (~B) # Added "& ~B"
+    A = (Tcold>=18) & (~B)
     Af = (A) & (Pdry>=60)
     Am = (A) & (~Af) & (Pdry>=100-MAP/25)
     Aw = (A) & (~Af) & (Pdry<100-MAP/25)
@@ -176,7 +183,7 @@ def koppen_geiger(T,P,koppen_table):
     Cfc = (Cf) & (~Cfa) & (~Cfb) & (Tmon10>=1) & (Tmon10<4)
 
     # Classification of D classes
-    D = (Thot>10) & (Tcold<=0) & (~B) # Added "& ~B"
+    D = (Thot>10) & (Tcold<=0) & (~B)
     Ds = (D) & (Psdry<40) & (Psdry<Pwwet/3)
     Dw = (D) & (Pwdry<Pswet/10)
     overlap = (Ds) & (Dw)
@@ -198,7 +205,7 @@ def koppen_geiger(T,P,koppen_table):
     Dfc = (Df) & (~Dfa) & (~Dfb) & (~Dfd)
 
     # Classification of E classes
-    E = (Thot <= 10) & (~B) # Added "& ~B", and replaced "Thot<10" with "Thot<=10"
+    E = (Thot <= 10) & (~B)
     ET = (E) & (Thot>0)
     EF = (E) & (Thot<=0)
     

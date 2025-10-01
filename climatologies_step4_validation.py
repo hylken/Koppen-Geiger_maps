@@ -29,6 +29,7 @@ def main():
     warnings.filterwarnings('ignore')
     np.set_printoptions(suppress=True)
     config = tools.load_config(sys.argv[1])
+    script_name = os.path.basename(sys.argv[0]).replace('.py', '')
     koppen_table = pd.read_csv(os.path.join('assets','koppen_table.csv'))
 
 
@@ -46,11 +47,11 @@ def main():
     area_map = 10**-6*(40075*res/360)**2*np.cos(np.deg2rad(yi))
 
     # Loop over scenarios and periods
-    df_kg_major_change_prct = pd.DataFrame(np.zeros((len(scenarios),2))*np.NaN,index=scenarios,columns=['1901-1930 to 1991-2020','1991-2020 to 2071-2100'])    
+    df_kg_major_change_prct = pd.DataFrame(np.zeros((len(scenarios),2))*np.nan,index=scenarios,columns=['1901-1930 to 1991-2020','1991-2020 to 2071-2100'])    
     for scenario in scenarios:
         print('===============================================================================')
         print('Compute areas covered by major KG classes and transitions for '+scenario)
-        kg_maps = np.zeros((mapsize[0],mapsize[1],len(periods)),dtype=np.single)*np.NaN
+        kg_maps = np.zeros((mapsize[0],mapsize[1],len(periods)),dtype=np.single)*np.nan
         for pp in np.arange(len(periods)):
             period = periods[pp]
             
@@ -84,9 +85,9 @@ def main():
             kg_maps[:,:,pp][mask] = 0
         
         # Make tables with area for major classes and transitions
-        df_kg_major_area_pct = pd.DataFrame(np.zeros((len(periods),6))*np.NaN,index=None,columns=['Period','A','B','C','D','E'])
-        df_kg_major_area_mm2 = pd.DataFrame(np.zeros((len(periods),6))*np.NaN,index=None,columns=['Period','A','B','C','D','E'])
-        df_transitions_mm2 = pd.DataFrame(np.zeros((1000,5))*np.NaN,index=None,columns=['From','To','Source','Target','Area'])
+        df_kg_major_area_pct = pd.DataFrame(np.zeros((len(periods),6))*np.nan,index=None,columns=['Period','A','B','C','D','E'])
+        df_kg_major_area_mm2 = pd.DataFrame(np.zeros((len(periods),6))*np.nan,index=None,columns=['Period','A','B','C','D','E'])
+        df_transitions_mm2 = pd.DataFrame(np.zeros((1000,5))*np.nan,index=None,columns=['From','To','Source','Target','Area'])
         count = 0
         for ll in np.arange(len(periods)):
         
@@ -115,9 +116,9 @@ def main():
                         count +=1
                     
         # Save results
-        df_kg_major_area_pct.to_csv(os.path.join(config['folder_stats'],'climatologies',scenario+'_kg_major_area_pct.csv'),index=False)
-        df_kg_major_area_mm2.to_csv(os.path.join(config['folder_stats'],'climatologies',scenario+'_kg_major_area_mm2.csv'),index=False)
-        df_transitions_mm2.to_csv(os.path.join(config['folder_stats'],'climatologies',scenario+'_transitions_mm2.csv'),index=False)
+        df_kg_major_area_pct.to_csv(os.path.join(config['folder_out'],script_name,scenario+'_kg_major_area_pct.csv'),index=False)
+        df_kg_major_area_mm2.to_csv(os.path.join(config['folder_out'],script_name,scenario+'_kg_major_area_mm2.csv'),index=False)
+        df_transitions_mm2.to_csv(os.path.join(config['folder_out'],script_name,scenario+'_transitions_mm2.csv'),index=False)
         
         # Compute percentage of land surface that changes
         mask_land = kg_maps[:,:,0]!=0        
@@ -131,7 +132,7 @@ def main():
         df_kg_major_change_prct.loc[scenario] = [diff1,diff2]
         
     # Save results
-    df_kg_major_change_prct.to_csv(os.path.join(config['folder_stats'],'climatologies','kg_major_change_prct.csv'),index=False)
+    df_kg_major_change_prct.to_csv(os.path.join(config['folder_out'],script_name,'kg_major_change_prct.csv'),index=False)
    
     
     #==============================================================================
@@ -151,13 +152,13 @@ def main():
         dates_daily = pd.date_range(start=pd.to_datetime(datetime(1900,1,1)),end=pd.to_datetime('today'), freq='D')
         station_files = glob.glob(os.path.join(config['folder_station'],'*.mat'))
         station_data = {}
-        station_data['lat'] = np.zeros((len(station_files)),dtype=np.single)*np.NaN
-        station_data['lon'] = np.zeros((len(station_files)),dtype=np.single)*np.NaN
-        station_data['name'] = np.zeros((len(station_files)),dtype=object)*np.NaN
-        station_data['T_monthly_clim'] = np.zeros((len(station_files),len(config['periods_historical']),12),dtype=np.single)*np.NaN
-        station_data['P_monthly_clim'] = np.zeros((len(station_files),len(config['periods_historical']),12),dtype=np.single)*np.NaN
-        station_data['Class'] = np.zeros((len(station_files),len(config['periods_historical'])),dtype=np.single)*np.NaN
-        station_data['Major'] = np.zeros((len(station_files),len(config['periods_historical'])),dtype=np.single)*np.NaN
+        station_data['lat'] = np.zeros((len(station_files)),dtype=np.single)*np.nan
+        station_data['lon'] = np.zeros((len(station_files)),dtype=np.single)*np.nan
+        station_data['name'] = np.zeros((len(station_files)),dtype=object)*np.nan
+        station_data['T_monthly_clim'] = np.zeros((len(station_files),len(config['periods_historical']),12),dtype=np.single)*np.nan
+        station_data['P_monthly_clim'] = np.zeros((len(station_files),len(config['periods_historical']),12),dtype=np.single)*np.nan
+        station_data['Class'] = np.zeros((len(station_files),len(config['periods_historical'])),dtype=np.single)*np.nan
+        station_data['Major'] = np.zeros((len(station_files),len(config['periods_historical'])),dtype=np.single)*np.nan
        
         # Loop over stations
         for ii in np.arange(len(station_files)): 
@@ -177,11 +178,11 @@ def main():
             vars = ['PRCP','TMIN','TMAX','TAVG']
             statdata = {}
             for var in vars:                                
-                statdata[var] = np.zeros((len(dates_daily),1))*np.NaN
+                statdata[var] = np.zeros((len(dates_daily),1))*np.nan
                 try:                    
                     statdata[var] = tools.readmatfile(station_files[ii],var).flatten().reshape(-1,1)
                     if len(statdata[var])<len(dates_daily):
-                        statdata[var] = np.concatenate((statdata[var],np.zeros((len(dates_daily),1))*np.NaN),axis=0)
+                        statdata[var] = np.concatenate((statdata[var],np.zeros((len(dates_daily),1))*np.nan),axis=0)
                     statdata[var] = statdata[var][:len(dates_daily)] 
                     if (var=='PRCP'):
                         statdata[var] = statdata[var]*30.4 # Compute monthly total
@@ -241,7 +242,7 @@ def main():
     print('===============================================================================')
     print('Computing accuracy for historical periods')
     nperiods = len(config['periods_historical'])
-    df_accuracy = pd.DataFrame(np.zeros((nperiods,6))*np.NaN,index=None,columns=['Period','nobs','Class','Major','conf_correct','conf_incorrect'])
+    df_accuracy = pd.DataFrame(np.zeros((nperiods,6))*np.nan,index=None,columns=['Period','nobs','Class','Major','conf_correct','conf_incorrect'])
     for pp in np.arange(nperiods):
         period = config['periods_historical'][pp]
         print(period)
@@ -306,9 +307,9 @@ def main():
     # Save to csv
     print(df_accuracy)
     df_accuracy.set_index('Period',inplace=True)
-    if os.path.isdir(os.path.join(config['folder_stats'],'validation'))==False:
-        os.makedirs(os.path.join(config['folder_stats'],'validation'))
-    df_accuracy.to_csv(os.path.join(config['folder_stats'],'validation','accuracy.csv'))
+    if os.path.isdir(os.path.join(config['folder_out'],script_name))==False:
+        os.makedirs(os.path.join(config['folder_out'],script_name))
+    df_accuracy.to_csv(os.path.join(config['folder_out'],script_name,'accuracy.csv'))
     
     pdb.set_trace()
 

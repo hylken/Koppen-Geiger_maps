@@ -18,7 +18,6 @@ from datetime import datetime
 from netCDF4 import Dataset
 import warnings
 import gc
-import tables
 import h5py
 
 def main():
@@ -30,6 +29,7 @@ def main():
     
     np.set_printoptions(suppress=True)
     config = tools.load_config(sys.argv[1])
+    script_name = os.path.basename(sys.argv[0]).replace('.py', '')
     koppen_table = pd.read_csv(os.path.join('assets','koppen_table.csv'))
     scenarios = ['ssp119','ssp126','ssp245','ssp370','ssp434','ssp460','ssp585']
     
@@ -42,13 +42,13 @@ def main():
     # Loop over periods and scenarios
     for period_future in config['periods_future']:
         for scenario in scenarios:
-            out_dir = os.path.join(config['folder_out'],'climatologies', \
+            out_dir = os.path.join(config['folder_out'],script_name, \
                 str(period_future[0])+'_'+str(period_future[1]),scenario)
             if os.path.isdir(out_dir)==False:
                 os.makedirs(out_dir)
             
             # Load model subset information
-            with np.load(os.path.join(config['folder_stats'],'projected_change.npz')) as dset_projected_change:
+            with np.load(os.path.join('.','climate_model_step2_compute_stats','projected_change.npz')) as dset_projected_change:
                 models = dset_projected_change['models']
                 model_subset = dset_projected_change['model_subset']
             
@@ -82,7 +82,7 @@ def main():
                 t0 = time.time()
                 
                 # Get list of ensemble members
-                files = glob.glob(os.path.join(config['folder_out'], 'climate_model_data', scenario+'_'+model+'_*_tas.npz'))
+                files = glob.glob(os.path.join(config['folder_out'], 'climate_model_step1_data_to_npz', scenario+'_'+model+'_*_tas.npz'))
                 members = [os.path.basename(x).split('_')[2] for x in files]
                 if len(members)==0:
                     print('No ensemble members available, skipping')
@@ -95,14 +95,14 @@ def main():
                 sim_data = {}
                 for vv in np.arange(len(config['vars'])):
                     varname = config['vars'][vv][0]
-                    sim_data[varname] = np.zeros((dims[0],dims[1],len(DatesMon),len(members)),dtype=np.single)*np.NaN
+                    sim_data[varname] = np.zeros((dims[0],dims[1],len(DatesMon),len(members)),dtype=np.single)*np.nan
                     for ee in np.arange(len(members)):
                         member = members[ee]
                         print(member)
                         
                         # Check if both historical and projection data exist
-                        cmip6_hist_file = os.path.join(config['folder_out'], 'climate_model_data', 'historical_'+model+'_'+member+'_'+config['vars'][vv][3]+'.npz')
-                        cmip6_future_file = os.path.join(config['folder_out'], 'climate_model_data', scenario+'_'+model+'_'+member+'_'+config['vars'][vv][3]+'.npz')
+                        cmip6_hist_file = os.path.join(config['folder_out'], 'climate_model_step1_data_to_npz', 'historical_'+model+'_'+member+'_'+config['vars'][vv][3]+'.npz')
+                        cmip6_future_file = os.path.join(config['folder_out'], 'climate_model_step1_data_to_npz', scenario+'_'+model+'_'+member+'_'+config['vars'][vv][3]+'.npz')
                         if (os.path.isfile(cmip6_hist_file)==False) | (os.path.isfile(cmip6_future_file)==False):
                             print(varname+": historical or future CMIP6 file doesn't exist, skipping")
                             continue
@@ -129,7 +129,7 @@ def main():
                         # If incomplete, make everything NaN
                         if sum(np.isnan(sim_data[varname][0,0,:,ee]))>0:
                             print(varname+' time series incomplete, skipping')
-                            sim_data[varname][:,:,:,ee] = np.NaN
+                            sim_data[varname][:,:,:,ee] = np.nan
                             continue
                             
                     # Compute average over all ensemble members
@@ -154,7 +154,7 @@ def main():
                         # Load high-res historic reference climatology
                         period_historic = config['periods_historical'][-1]
                         suffix = str(180/config['mapsize'][0]).replace('.','p')[:10]
-                        dset = Dataset(os.path.join(config['folder_out'],'climatologies', \
+                        dset = Dataset(os.path.join(config['folder_out'],script_name, \
                             str(period_historic[0])+'_'+str(period_historic[1]),'ensemble_mean_'+suffix+'.nc'))
                         data = np.array(dset.variables[config['vars'][vv][1]][month-1,:,:],dtype=np.single)
                         dset.close()
@@ -179,14 +179,7 @@ def main():
                         # Save temporally-adjusted high-res future climatology
                         tools.write_to_netcdf_3d(ncout,change['target_map'],config['vars'][vv][1],config['vars'][vv][2],month,1)
                         del data
-
-                        # Attempt to fix random "There are 150 HDF5 objects open!" errors
-                        tables.file._open_files.close_all()
-                        try:
-                            del f
-                        except:
-                            pass
-                            
+    
                 del sim_data    
                 
                 print("Time elapsed is "+str(time.time()-t0)+" sec")

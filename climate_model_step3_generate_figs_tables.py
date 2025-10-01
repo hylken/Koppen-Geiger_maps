@@ -29,11 +29,13 @@ def main():
     #==============================================================================
 
     config = tools.load_config(sys.argv[1])
-    dirout = os.path.join(sys.path[0], config['folder_stats'])
+    script_name = os.path.basename(sys.argv[0]).replace('.py', '')
+    dirout = os.path.join('.', script_name)
 
     warnings.filterwarnings('ignore')
     np.set_printoptions(suppress=True)
     
+
     # Download font from https://fontsgeek.com/fonts/Myriad-Pro-Regular
     # Place in ~/.fonts
     # Rebuild cache with: fc-cache -f -v
@@ -52,14 +54,14 @@ def main():
     # https://paletton.com/#uid=71x1q1kllllaFw0g0qFqFg0w0aFkllllaFw0g0qFqFg0w0aFkllllaFw0g0qFqFg0w0aFkllllaFw0g0qFqFg0w0aF
 
     # Load data
-    pd_pvals_median = pd.read_csv(os.path.join(dirout,'sim_vs_obs','pvals_median.csv'),index_col=0)
-    pd_nmembers = pd.read_csv(os.path.join(dirout,'sim_vs_obs','nmembers.csv'),index_col=0)
-    pd_sim_trends = pd.read_csv(os.path.join(dirout,'sim_vs_obs','sim_trends.csv'),index_col=0)
-    pd_obs_trends = pd.read_csv(os.path.join(dirout,'sim_vs_obs','obs_trends.csv'),index_col=0)
-    pd_int_var = pd.read_csv(os.path.join(config['folder_stats'],'sim_vs_obs','int_var.csv'),index_col=0)
-    pd_ECS = pd.read_csv(os.path.join(dirout,'sensitivity','ECS.csv'),index_col=0)
-    pd_TCR = pd.read_csv(os.path.join(dirout,'sensitivity','TCR.csv'),index_col=0)
-    dset_projected_change = np.load(os.path.join(config['folder_stats'],'projected_change.npz'))
+    pd_pvals_median = pd.read_csv(os.path.join('.','climate_model_step2_compute_stats','sim_vs_obs','pvals_median.csv'),index_col=0)
+    pd_nmembers = pd.read_csv(os.path.join('.','climate_model_step2_compute_stats','sim_vs_obs','nmembers.csv'),index_col=0)
+    pd_sim_trends = pd.read_csv(os.path.join('.','climate_model_step2_compute_stats','sim_vs_obs','sim_trends.csv'),index_col=0)
+    pd_obs_trends = pd.read_csv(os.path.join('.','climate_model_step2_compute_stats','sim_vs_obs','obs_trends.csv'),index_col=0)
+    pd_int_var = pd.read_csv(os.path.join('.','climate_model_step2_compute_stats','sim_vs_obs','int_var.csv'),index_col=0)
+    pd_ECS = pd.read_csv(os.path.join('.','climate_model_step2_compute_stats','sensitivity','ECS.csv'),index_col=0)
+    pd_TCR = pd.read_csv(os.path.join('.','climate_model_step2_compute_stats','sensitivity','TCR.csv'),index_col=0)
+    dset_projected_change = np.load(os.path.join('.','climate_model_step2_compute_stats','projected_change.npz'))
     
     models = np.array(pd_sim_trends.index.tolist())
 
@@ -155,11 +157,11 @@ def main():
     #==============================================================================
     
     # Load future change estimates
-    df = pd.read_csv(os.path.join(dirout,'projected_change.csv'),index_col=0)
+    df = pd.read_csv(os.path.join('.','climate_model_step2_compute_stats','projected_change.csv'),index_col=0)
     scenarios = np.unique(df['Scenario']).tolist()
     
     # Load HadCRUT data and compute difference between industrial and reference 
-    HadCRUT = pd.read_csv(os.path.join(config['folder_stats'],'sim_vs_obs','HadCRUT.csv'),index_col=0)
+    HadCRUT = pd.read_csv(os.path.join('.','climate_model_step2_compute_stats','sim_vs_obs','HadCRUT.csv'),index_col=0)
     HadCRUT_mean = np.mean(HadCRUT,axis=1)
     reference_period1 = (1850,1900)
     reference_period2 = (1961,1990)
@@ -339,7 +341,7 @@ def main():
             print(var+' '+stat+' mean uncertainty reduction '+str(np.nanmean(uncertainty_ratio*area_map)/np.nanmean(area_map)))
             
     # Experiment to determine average underestimation of standard deviation from small samples
-    iqrs = np.zeros((10000,))*np.NaN
+    iqrs = np.zeros((10000,))*np.nan
     for ii in np.arange(len(iqrs)): 
         iqrs[ii] = scipy.stats.iqr(np.random.normal(loc=0.0, scale=1.0, size=(30,)))        
     

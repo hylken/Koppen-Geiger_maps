@@ -32,8 +32,9 @@ def main():
     warnings.filterwarnings('ignore')
     np.set_printoptions(suppress=True)
     config = tools.load_config(sys.argv[1])
+    script_name = os.path.basename(sys.argv[0]).replace('.py', '')
 
-
+    
     #==============================================================================
     #   Preparation
     #==============================================================================
@@ -41,19 +42,19 @@ def main():
     DatesMon = pd.date_range(start=datetime(1850,1,1), end=datetime(2099,12,31), freq='MS')
     Years = np.unique(DatesMon.year)
 
-    if os.path.isdir(os.path.join(config['folder_stats'],'sim_vs_obs'))==False:
-        os.makedirs(os.path.join(config['folder_stats'],'sim_vs_obs'))
-    if os.path.isdir(os.path.join(config['folder_stats'],'sim_vs_obs','sim'))==False:
-        os.makedirs(os.path.join(config['folder_stats'],'sim_vs_obs','sim'))
-    if os.path.isdir(os.path.join(config['folder_stats'],'sensitivity'))==False:
-        os.makedirs(os.path.join(config['folder_stats'],'sensitivity'))
+    if os.path.isdir(os.path.join('.',script_name,'sim_vs_obs'))==False:
+        os.makedirs(os.path.join('.',script_name,'sim_vs_obs'))
+    if os.path.isdir(os.path.join('.',script_name,'sim_vs_obs','sim'))==False:
+        os.makedirs(os.path.join('.',script_name,'sim_vs_obs','sim'))
+    if os.path.isdir(os.path.join('.',script_name,'sensitivity'))==False:
+        os.makedirs(os.path.join('.',script_name,'sensitivity'))
 
     
     #==============================================================================
     #   Load HadCRUT ensemble
     #==============================================================================
 
-    if os.path.isfile(os.path.join(config['folder_stats'],'sim_vs_obs','HadCRUT.csv'))==False: 
+    if os.path.isfile(os.path.join('.',script_name,'sim_vs_obs','HadCRUT.csv'))==False: 
         print('--------------------------------------------------------------------------------')
         print('Processing observed data')
         t = time.time()
@@ -66,16 +67,16 @@ def main():
         area_map = (40075*res/360)**2*np.cos(np.deg2rad(yi))
         
         # Load HadCRUT monthly T data ensemble
-        HadCRUT = np.zeros((len(Years),200),dtype=np.single)*np.NaN
+        HadCRUT = np.zeros((len(Years),200),dtype=np.single)*np.nan
         for ee in np.arange(1,201):
             filepath = glob.glo(os.path.join(config['folder_dataraw'], 'HadCRUT', 'HadCRUT.*.analysis.anomalies.'+str(ee)+'.nc'))[0]
             ncfile = Dataset(filepath)
             tmp = np.array(ncfile.variables['tas'][:]) 
             ncfile.close()
-            tmp[tmp==-1e30] = np.NaN
+            tmp[tmp==-1e30] = np.nan
             dates = pd.date_range(start=datetime(1850,1,1), end=datetime(2099,12,1), freq='MS')
             dates = dates[:tmp.shape[0]]
-            HADCRU_T = np.zeros((tmp.shape[1],tmp.shape[2],len(DatesMon)),dtype=np.single)*np.NaN
+            HADCRU_T = np.zeros((tmp.shape[1],tmp.shape[2],len(DatesMon)),dtype=np.single)*np.nan
             for ii in np.arange(len(DatesMon)):
                 jj = (dates.year==DatesMon[ii].year) & (dates.month==DatesMon[ii].month)
                 if np.sum(jj)>0:
@@ -91,11 +92,11 @@ def main():
                 HadCRUT[yy,ee-1] = np.mean(tmp*area_map)/np.mean(area_map) 
         
         HadCRUT = pd.DataFrame(HadCRUT,index=Years,columns=np.arange(1,201))
-        HadCRUT.to_csv(os.path.join(config['folder_stats'],'sim_vs_obs','HadCRUT.csv'))
+        HadCRUT.to_csv(os.path.join('.',script_name,'sim_vs_obs','HadCRUT.csv'))
         print('Time elapsed is '+str(time.time() - t)+' sec')
     
     else:
-        HadCRUT = pd.read_csv(os.path.join(config['folder_stats'],'sim_vs_obs','HadCRUT.csv'),index_col=0)
+        HadCRUT = pd.read_csv(os.path.join('.',script_name,'sim_vs_obs','HadCRUT.csv'),index_col=0)
    
       
     #==============================================================================
@@ -112,7 +113,7 @@ def main():
     end_year = 2014
             
     # Get list of models
-    files = glob.glob(os.path.join(config['folder_out'], 'climate_model_data', 'historical_*_tas.npz'))
+    files = glob.glob(os.path.join(config['folder_out'], 'climate_model_step1_data_to_npz', 'historical_*_tas.npz'))
     models = np.unique([os.path.basename(x).split('_')[1] for x in files]).tolist()
     try:
         models.remove('historical')
@@ -135,18 +136,18 @@ def main():
         #    continue
         
         # Get list of model ensemble members
-        files = glob.glob(os.path.join(config['folder_out'], 'climate_model_data', 'historical_'+model+'_*_tas.npz'))
+        files = glob.glob(os.path.join(config['folder_out'], 'climate_model_step1_data_to_npz', 'historical_'+model+'_*_tas.npz'))
         members = [os.path.basename(x).split('_')[2] for x in files]
         
         # Loop over model ensemble members
-        sim_trends = np.zeros((len(members),))*np.NaN
+        sim_trends = np.zeros((len(members),))*np.nan
         for ee in np.arange(np.min((len(members),20))):
             member = members[ee]
             pd_members.iloc[mm,ee] = member            
         
             # Load historical simulation            
-            tas = np.zeros((len(Years),))*np.NaN
-            with np.load(os.path.join(config['folder_out'], 'climate_model_data', 'historical_'+model+'_'+member+'_tas.npz')) as historical:
+            tas = np.zeros((len(Years),))*np.nan
+            with np.load(os.path.join(config['folder_out'], 'climate_model_step1_data_to_npz', 'historical_'+model+'_'+member+'_tas.npz')) as historical:
                 data = historical['ts_mean_yr']
                 yrs = historical['Years']
                 for yy in np.arange(len(Years)):
@@ -157,7 +158,7 @@ def main():
             # Load SSP245 simulation (if it exists) to extend historical data
             # Not a good idea; almost 30% of the models has no SSP245 data
             #try:
-            #    with np.load(os.path.join(config['folder_out'], 'climate_model_data', 'ssp245_'+model+'_'+member+'_tas.npz')) as future:
+            #    with np.load(os.path.join(config['folder_out'], 'climate_model_step1_data_to_npz', 'ssp245_'+model+'_'+member+'_tas.npz')) as future:
             #        for yy in np.arange(len(Years)):
             #            sel = future['Years']==Years[yy]
             #            if sum(sel)==1:
@@ -166,7 +167,7 @@ def main():
             #    pass
                 
             # Save to csv
-            pd.Series(tas,index=Years.astype(int)).to_csv(os.path.join(config['folder_stats'],'sim_vs_obs','sim',model+'_'+member+'.csv'),header=False)
+            pd.Series(tas,index=Years.astype(int)).to_csv(os.path.join('.',script_name,'sim_vs_obs','sim',model+'_'+member+'.csv'),header=False)
             
             # Simulated trend
             sel = (Years>=start_year) & (Years<=end_year) # & (~np.isnan(tas)) & (tas>-100) & (tas<100)
@@ -203,16 +204,16 @@ def main():
             pd_pvals.iloc[mm,ee] = stats.norm.cdf(z,0,1)*2
     
     # Output to csv files
-    pd_pvals.to_csv(os.path.join(config['folder_stats'],'sim_vs_obs','pvals.csv'))
-    pd_members.to_csv(os.path.join(config['folder_stats'],'sim_vs_obs','members.csv'))
-    pd_nmembers.to_csv(os.path.join(config['folder_stats'],'sim_vs_obs','nmembers.csv'))
-    pd_sim_trends.to_csv(os.path.join(config['folder_stats'],'sim_vs_obs','sim_trends.csv'))
-    pd_obs_trends.to_csv(os.path.join(config['folder_stats'],'sim_vs_obs','obs_trends.csv'))
-    pd_int_var.to_csv(os.path.join(config['folder_stats'],'sim_vs_obs','int_var.csv'))
+    pd_pvals.to_csv(os.path.join('.',script_name,'sim_vs_obs','pvals.csv'))
+    pd_members.to_csv(os.path.join('.',script_name,'sim_vs_obs','members.csv'))
+    pd_nmembers.to_csv(os.path.join('.',script_name,'sim_vs_obs','nmembers.csv'))
+    pd_sim_trends.to_csv(os.path.join('.',script_name,'sim_vs_obs','sim_trends.csv'))
+    pd_obs_trends.to_csv(os.path.join('.',script_name,'sim_vs_obs','obs_trends.csv'))
+    pd_int_var.to_csv(os.path.join('.',script_name,'sim_vs_obs','int_var.csv'))
 
     # Compute median pvals
     pvals_median = np.median(pd_pvals.values,axis=1)
-    pd.Series(pvals_median,index=models).to_csv(os.path.join(config['folder_stats'],'sim_vs_obs','pvals_median.csv'))
+    pd.Series(pvals_median,index=models).to_csv(os.path.join('.',script_name,'sim_vs_obs','pvals_median.csv'))
     
     print('Time elapsed is '+str(time.time() - t)+' sec')
     
@@ -236,7 +237,7 @@ def main():
         model = models[mm]
         
         # Get list of ensemble members
-        files = glob.glob(os.path.join(config['folder_out'], 'climate_model_data', 'piControl_'+model+'_*_tas.npz'))
+        files = glob.glob(os.path.join(config['folder_out'], 'climate_model_step1_data_to_npz', 'piControl_'+model+'_*_tas.npz'))
         members = [os.path.basename(x).split('_')[2] for x in files]
             
         #------------------------------------------------------------------------------
@@ -257,14 +258,14 @@ def main():
             try:
 
                 # Load data
-                abrupt4xCO2_tas = np.load(os.path.join(config['folder_out'], 'climate_model_data', 'abrupt-4xCO2_'+model+'_'+member+'_tas.npz'))
-                abrupt4xCO2_rsdt = np.load(os.path.join(config['folder_out'], 'climate_model_data', 'abrupt-4xCO2_'+model+'_'+member+'_rsdt.npz'))
-                abrupt4xCO2_rsut = np.load(os.path.join(config['folder_out'], 'climate_model_data', 'abrupt-4xCO2_'+model+'_'+member+'_rsut.npz'))
-                abrupt4xCO2_rlut = np.load(os.path.join(config['folder_out'], 'climate_model_data', 'abrupt-4xCO2_'+model+'_'+member+'_rlut.npz'))
-                piControl_tas = np.load(os.path.join(config['folder_out'], 'climate_model_data', 'piControl_'+model+'_'+member+'_tas.npz'))
-                piControl_rsdt = np.load(os.path.join(config['folder_out'], 'climate_model_data', 'piControl_'+model+'_'+member+'_rsdt.npz'))
-                piControl_rsut = np.load(os.path.join(config['folder_out'], 'climate_model_data', 'piControl_'+model+'_'+member+'_rsut.npz'))
-                piControl_rlut = np.load(os.path.join(config['folder_out'], 'climate_model_data', 'piControl_'+model+'_'+member+'_rlut.npz'))
+                abrupt4xCO2_tas = np.load(os.path.join(config['folder_out'], 'climate_model_step1_data_to_npz', 'abrupt-4xCO2_'+model+'_'+member+'_tas.npz'))
+                abrupt4xCO2_rsdt = np.load(os.path.join(config['folder_out'], 'climate_model_step1_data_to_npz', 'abrupt-4xCO2_'+model+'_'+member+'_rsdt.npz'))
+                abrupt4xCO2_rsut = np.load(os.path.join(config['folder_out'], 'climate_model_step1_data_to_npz', 'abrupt-4xCO2_'+model+'_'+member+'_rsut.npz'))
+                abrupt4xCO2_rlut = np.load(os.path.join(config['folder_out'], 'climate_model_step1_data_to_npz', 'abrupt-4xCO2_'+model+'_'+member+'_rlut.npz'))
+                piControl_tas = np.load(os.path.join(config['folder_out'], 'climate_model_step1_data_to_npz', 'piControl_'+model+'_'+member+'_tas.npz'))
+                piControl_rsdt = np.load(os.path.join(config['folder_out'], 'climate_model_step1_data_to_npz', 'piControl_'+model+'_'+member+'_rsdt.npz'))
+                piControl_rsut = np.load(os.path.join(config['folder_out'], 'climate_model_step1_data_to_npz', 'piControl_'+model+'_'+member+'_rsut.npz'))
+                piControl_rlut = np.load(os.path.join(config['folder_out'], 'climate_model_step1_data_to_npz', 'piControl_'+model+'_'+member+'_rlut.npz'))
                                  
                 # Regression
                 sel = np.arange(20,150)
@@ -272,7 +273,7 @@ def main():
                     -(piControl_rsdt['ts_mean_yr'][sel]-piControl_rsut['ts_mean_yr'][sel]-piControl_rlut['ts_mean_yr'][sel]) # Top of atmosphere (or model) net radiative flux anomaly (W/m2)
                 deltaT = abrupt4xCO2_tas['ts_mean_yr'][sel]-piControl_tas['ts_mean_yr'][sel] # Temperature anomaly (degrees C)
                 Y, X = deltaN, deltaT
-                X[(X<-100) | (X>100)] = np.NaN            
+                X[(X<-100) | (X>100)] = np.nan            
                 slope = np.sum((Y-np.mean(Y))*(X-np.mean(X)))/np.sum((X-np.mean(X))**2)
                 intercept = np.mean(Y)-slope*np.mean(X)
                 
@@ -287,14 +288,14 @@ def main():
         
         # Try to compute ECS for models without both experiments for any member
         if np.isnan(np.nanmean(pd_ECS.iloc[mm,:])):
-            files_abrupt4xCO2_tas = glob.glob(os.path.join(config['folder_out'], 'climate_model_data', 'abrupt-4xCO2_'+model+'_*_tas.npz'))
-            files_abrupt4xCO2_rsdt = glob.glob(os.path.join(config['folder_out'], 'climate_model_data', 'abrupt-4xCO2_'+model+'_*_rsdt.npz'))
-            files_abrupt4xCO2_rsut = glob.glob(os.path.join(config['folder_out'], 'climate_model_data', 'abrupt-4xCO2_'+model+'_*_rsut.npz'))
-            files_abrupt4xCO2_rlut = glob.glob(os.path.join(config['folder_out'], 'climate_model_data', 'abrupt-4xCO2_'+model+'_*_rlut.npz'))
-            files_piControl_tas = glob.glob(os.path.join(config['folder_out'], 'climate_model_data', 'piControl_'+model+'_*_tas.npz'))
-            files_piControl_rsdt = glob.glob(os.path.join(config['folder_out'], 'climate_model_data', 'piControl_'+model+'_*_rsdt.npz'))
-            files_piControl_rsut = glob.glob(os.path.join(config['folder_out'], 'climate_model_data', 'piControl_'+model+'_*_rsut.npz'))
-            files_piControl_rlut = glob.glob(os.path.join(config['folder_out'], 'climate_model_data', 'piControl_'+model+'_*_rlut.npz'))
+            files_abrupt4xCO2_tas = glob.glob(os.path.join(config['folder_out'], 'climate_model_step1_data_to_npz', 'abrupt-4xCO2_'+model+'_*_tas.npz'))
+            files_abrupt4xCO2_rsdt = glob.glob(os.path.join(config['folder_out'], 'climate_model_step1_data_to_npz', 'abrupt-4xCO2_'+model+'_*_rsdt.npz'))
+            files_abrupt4xCO2_rsut = glob.glob(os.path.join(config['folder_out'], 'climate_model_step1_data_to_npz', 'abrupt-4xCO2_'+model+'_*_rsut.npz'))
+            files_abrupt4xCO2_rlut = glob.glob(os.path.join(config['folder_out'], 'climate_model_step1_data_to_npz', 'abrupt-4xCO2_'+model+'_*_rlut.npz'))
+            files_piControl_tas = glob.glob(os.path.join(config['folder_out'], 'climate_model_step1_data_to_npz', 'piControl_'+model+'_*_tas.npz'))
+            files_piControl_rsdt = glob.glob(os.path.join(config['folder_out'], 'climate_model_step1_data_to_npz', 'piControl_'+model+'_*_rsdt.npz'))
+            files_piControl_rsut = glob.glob(os.path.join(config['folder_out'], 'climate_model_step1_data_to_npz', 'piControl_'+model+'_*_rsut.npz'))
+            files_piControl_rlut = glob.glob(os.path.join(config['folder_out'], 'climate_model_step1_data_to_npz', 'piControl_'+model+'_*_rlut.npz'))
             try:
                 abrupt4xCO2_tas = np.load(files_abrupt4xCO2_tas[0])
                 abrupt4xCO2_rsdt = np.load(files_abrupt4xCO2_rsdt[0])
@@ -310,7 +311,7 @@ def main():
                 deltaN = (abrupt4xCO2_rsdt['ts_mean_yr'][sel]-abrupt4xCO2_rsut['ts_mean_yr'][sel]-abrupt4xCO2_rlut['ts_mean_yr'][sel])-(piControl_rsdt['ts_mean_yr'][sel]-piControl_rsut['ts_mean_yr'][sel]-piControl_rlut['ts_mean_yr'][sel]) # Top of atmosphere (or model) net radiative flux anomaly (W/m2)
                 deltaT = abrupt4xCO2_tas['ts_mean_yr'][sel]-piControl_tas['ts_mean_yr'][sel] # Temperature anomaly (degrees C)
                 Y, X = deltaN, deltaT
-                X[(X<-100) | (X>100)] = np.NaN            
+                X[(X<-100) | (X>100)] = np.nan            
                 slope = np.sum((Y-np.mean(Y))*(X-np.mean(X)))/np.sum((X-np.mean(X))**2)
                 intercept = np.mean(Y)-slope*np.mean(X)
                 
@@ -338,12 +339,12 @@ def main():
             try:
             
                 # Load data
-                with np.load(os.path.join(config['folder_out'], 'climate_model_data', '1pctCO2_'+model+'_'+member+'_tas.npz')) as onepctCO2_tas, \
-                    np.load(os.path.join(config['folder_out'], 'climate_model_data', 'piControl_'+model+'_'+member+'_tas.npz')) as piControl_tas:
+                with np.load(os.path.join(config['folder_out'], 'climate_model_step1_data_to_npz', '1pctCO2_'+model+'_'+member+'_tas.npz')) as onepctCO2_tas, \
+                    np.load(os.path.join(config['folder_out'], 'climate_model_step1_data_to_npz', 'piControl_'+model+'_'+member+'_tas.npz')) as piControl_tas:
                     
                     # Regression
                     #Y = piControl_tas['ts_mean_yr'][1:140]
-                    #Y[(Y<-100) | (Y>100)] = np.NaN
+                    #Y[(Y<-100) | (Y>100)] = np.nan
                     #X = piControl_tas['Years'][1:140]            
                     #slope = np.sum((Y-np.mean(Y))*(X-np.mean(X)))/np.sum((X-np.mean(X))**2)
                     #intercept = np.mean(Y)-slope*np.mean(X)
@@ -351,12 +352,12 @@ def main():
                     # Compute TCR
                     #anomT = onepctCO2_tas['ts_mean_yr'][1:150]-(slope*piControl_tas['Years'][1:150]+intercept) # Temperature anomaly (degrees C)
                     #anomT = onepctCO2_tas['ts_mean_yr'][1:150]-(slope*piControl_tas['Years'][1:150]+intercept) # Temperature anomaly (degrees C)
-                    #anomT[(anomT<-100) | (anomT>100)] = np.NaN
+                    #anomT[(anomT<-100) | (anomT>100)] = np.nan
                     #pd_TCR.iloc[mm,ee] = np.mean(anomT[60:80])
                     
                     # Compute TCR
                     anomT = onepctCO2_tas['ts_mean_yr'][60:80]-piControl_tas['ts_mean_yr'][60:80]
-                    anomT[(anomT<-100) | (anomT>100)] = np.NaN
+                    anomT[(anomT<-100) | (anomT>100)] = np.nan
                     pd_TCR.iloc[mm,ee] = np.mean(anomT)
                     
             except:
@@ -364,24 +365,24 @@ def main():
                         
         # Try to compute TCR for models without both experiments for any member (for example EC-Earth3)
         if np.isnan(np.nanmean(pd_TCR.iloc[mm,:])):
-            files_1pctCO2 = glob.glob(os.path.join(config['folder_out'], 'climate_model_data', '1pctCO2_'+model+'_*_tas.npz'))
-            files_piControl = glob.glob(os.path.join(config['folder_out'], 'climate_model_data', 'piControl_'+model+'_*_tas.npz'))
+            files_1pctCO2 = glob.glob(os.path.join(config['folder_out'], 'climate_model_step1_data_to_npz', '1pctCO2_'+model+'_*_tas.npz'))
+            files_piControl = glob.glob(os.path.join(config['folder_out'], 'climate_model_step1_data_to_npz', 'piControl_'+model+'_*_tas.npz'))
             try:
                 onepctCO2_tas = np.load(files_1pctCO2[0])
                 piControl_tas = np.load(files_piControl[0])
                 
                 # Compute TCR
                 anomT = onepctCO2_tas['ts_mean_yr'][60:80]-piControl_tas['ts_mean_yr'][60:80]
-                anomT[(anomT<-100) | (anomT>100)] = np.NaN
+                anomT[(anomT<-100) | (anomT>100)] = np.nan
                 pd_TCR.iloc[mm,0] = np.mean(anomT)
                     
             except:
                 pass
         
     # Output ECS and TCR values to csv
-    pd_members.to_csv(os.path.join(config['folder_stats'],'sensitivity','members.csv'))
-    pd_ECS.to_csv(os.path.join(config['folder_stats'],'sensitivity','ECS.csv'))
-    pd_TCR.to_csv(os.path.join(config['folder_stats'],'sensitivity','TCR.csv'))
+    pd_members.to_csv(os.path.join('.',script_name,'sensitivity','members.csv'))
+    pd_ECS.to_csv(os.path.join('.',script_name,'sensitivity','ECS.csv'))
+    pd_TCR.to_csv(os.path.join('.',script_name,'sensitivity','TCR.csv'))
 
     print('Time elapsed is '+str(time.time() - t)+' sec')
         
@@ -395,7 +396,7 @@ def main():
     # Backup original stdout
     original_stdout = sys.stdout 
     
-    with open(os.path.join(config['folder_stats'],'sensitivity','model_sensitivity_summary.txt'), 'w') as f:
+    with open(os.path.join('.',script_name,'sensitivity','model_sensitivity_summary.txt'), 'w') as f:
         sys.stdout = f  # Change the standard output to the file we created.
 
         mean, std = np.mean(pd_obs_trends.values), np.std(pd_obs_trends.values)
@@ -413,11 +414,11 @@ def main():
         ecs_vals = np.nanmean(np.array(pd_ECS.values).astype(np.single),axis=1)
         
         trend_within_range = ((trend_vals>=lo) & (trend_vals<=hi)).astype(np.single)
-        trend_within_range[np.isnan(trend_vals)] = np.NaN
+        trend_within_range[np.isnan(trend_vals)] = np.nan
         tcr_within_range = ((tcr_vals>=1.4) & (tcr_vals<=2.2)).astype(np.single)
-        tcr_within_range[np.isnan(tcr_vals)] = np.NaN
+        tcr_within_range[np.isnan(tcr_vals)] = np.nan
         ecs_within_range = ((ecs_vals>=2.5) & (ecs_vals<=4)).astype(np.single)
-        ecs_within_range[np.isnan(ecs_vals)] = np.NaN
+        ecs_within_range[np.isnan(ecs_vals)] = np.nan
         
         model_subset = (trend_within_range==1) | (tcr_within_range==1)
         print('Number of models in Model Subset: '+str(sum(model_subset)))
@@ -479,19 +480,19 @@ def main():
                     model = models[mm]
                     
                     # Get list of model ensemble members
-                    files = glob.glob(os.path.join(config['folder_out'], 'climate_model_data', scenario+'_'+model+'_*_'+variable+'.npz'))
+                    files = glob.glob(os.path.join(config['folder_out'], 'climate_model_step1_data_to_npz', scenario+'_'+model+'_*_'+variable+'.npz'))
                     members = [os.path.basename(x).split('_')[2] for x in files]
                     if len(members)==0:
                         continue
                     
                     # Loop over model ensemble members
-                    sim_data = np.zeros((20,len(Years)),dtype=np.single)*np.NaN
+                    sim_data = np.zeros((20,len(Years)),dtype=np.single)*np.nan
                     for ee in np.arange(len(members)):
                         member = members[ee]            
                         
                         # Load historical simulation
                         try:
-                            with np.load(os.path.join(config['folder_out'], 'climate_model_data', 'historical_'+model+'_'+member+'_'+variable+'.npz')) as historical:
+                            with np.load(os.path.join(config['folder_out'], 'climate_model_step1_data_to_npz', 'historical_'+model+'_'+member+'_'+variable+'.npz')) as historical:
                                 yrs = historical['Years']
                                 data = historical[statistic]
                                 for yy in np.arange(len(Years)):
@@ -502,7 +503,7 @@ def main():
                             continue
                             
                         # Load projection
-                        with np.load(os.path.join(config['folder_out'], 'climate_model_data', scenario+'_'+model+'_'+member+'_'+variable+'.npz')) as future:
+                        with np.load(os.path.join(config['folder_out'], 'climate_model_step1_data_to_npz', scenario+'_'+model+'_'+member+'_'+variable+'.npz')) as future:
                             yrs = future['Years']
                             data = future[statistic]
                             for yy in np.arange(len(Years)):
@@ -532,7 +533,7 @@ def main():
                         df = pd.concat([df, pd.DataFrame([newrow])], ignore_index=True)
           
     # Output to csv file
-    df.to_csv(os.path.join(config['folder_stats'],'projected_change.csv'))
+    df.to_csv(os.path.join('.',script_name,'projected_change.csv'))
 
     print('Time elapsed is '+str(time.time() - t)+' sec')
     
@@ -547,7 +548,7 @@ def main():
     
     statistics = ['data_mean_yr','data_min_yr','data_max_yr']
     
-    change = np.zeros((len(variables),len(statistics),len(scenarios),len(models),180,360),dtype=np.single)*np.NaN
+    change = np.zeros((len(variables),len(statistics),len(scenarios),len(models),180,360),dtype=np.single)*np.nan
     for vv in np.arange(len(variables)):
         variable = variables[vv]
         for aa in np.arange(len(statistics)):
@@ -566,21 +567,21 @@ def main():
                     model = models[mm]
                    
                     # Get list of model ensemble members
-                    files = glob.glob(os.path.join(config['folder_out'], 'climate_model_data', scenario+'_'+model+'_*_'+variable+'.npz'))
+                    files = glob.glob(os.path.join(config['folder_out'], 'climate_model_step1_data_to_npz', scenario+'_'+model+'_*_'+variable+'.npz'))
                     members = [os.path.basename(x).split('_')[2] for x in files]
                     if len(members)==0:
                         continue
                     
                     # Loop over model ensemble members
-                    with np.load(os.path.join(config['folder_out'], 'climate_model_data', scenario+'_'+model+'_'+members[0]+'_'+variable+'.npz')) as future:
+                    with np.load(os.path.join(config['folder_out'], 'climate_model_step1_data_to_npz', scenario+'_'+model+'_'+members[0]+'_'+variable+'.npz')) as future:
                         dims = future[statistic].shape
-                    sim_data = np.zeros((dims[0],dims[1],20,len(Years)),dtype=np.single)*np.NaN
+                    sim_data = np.zeros((dims[0],dims[1],20,len(Years)),dtype=np.single)*np.nan
                     for ee in np.arange(len(members)):
                         member = members[ee]            
                         
                         # Load simulation data
                         try:
-                            with np.load(os.path.join(config['folder_out'], 'climate_model_data', 'historical_'+model+'_'+member+'_'+variable+'.npz')) as historical:
+                            with np.load(os.path.join(config['folder_out'], 'climate_model_step1_data_to_npz', 'historical_'+model+'_'+member+'_'+variable+'.npz')) as historical:
                                 data = historical[statistic]
                                 yrs = historical['Years']
                                 for yy in np.arange(len(Years)):
@@ -588,7 +589,7 @@ def main():
                                     if sum(sel)==1:
                                         sim_data[:,:,ee,yy] = np.squeeze(data[:,:,sel])
                                         
-                            with np.load(os.path.join(config['folder_out'], 'climate_model_data', scenario+'_'+model+'_'+member+'_'+variable+'.npz')) as future:
+                            with np.load(os.path.join(config['folder_out'], 'climate_model_step1_data_to_npz', scenario+'_'+model+'_'+member+'_'+variable+'.npz')) as future:
                                 data = future[statistic]
                                 yrs = future['Years']
                                 for yy in np.arange(len(Years)):
@@ -610,7 +611,7 @@ def main():
                         change[vv,aa,ss,mm,:,:] = resize_local_mean(100*np.nanmean(sim_data[:,:,sel_fut],axis=2)/np.nanmean(sim_data[:,:,sel_ref],axis=2)-100,(180,360))
                 print('Time elapsed is '+str(time.time() - t)+' sec')                
             
-    np.savez_compressed(os.path.join(config['folder_stats'],'projected_change.npz'),\
+    np.savez_compressed(os.path.join('.',script_name,'projected_change.npz'),\
         change=change,variables=variables,statistics=statistics,scenarios=scenarios,models=models,\
         model_subset=model_subset)
 

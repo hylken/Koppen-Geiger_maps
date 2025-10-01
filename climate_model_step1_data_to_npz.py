@@ -35,6 +35,7 @@ def main():
     #==============================================================================
 
     config = tools.load_config(sys.argv[1])
+    script_name = os.path.basename(sys.argv[0]).replace('.py', '')
 
     scenarios = ['1pctCO2','abrupt-4xCO2','piControl','historical','ssp119','ssp126','ssp245','ssp370','ssp434','ssp460','ssp585']
     random.shuffle(scenarios)
@@ -47,13 +48,14 @@ def main():
     mask_full = mfile['DATA'].astype(bool)
     
     
+    
     #==============================================================================
     #   Loop over scenarios, models, and members and load data and generate 
     #   figures for verication.
     #==============================================================================
 
-    if os.path.isdir(os.path.join(config['folder_out'],'climate_model_data','figures'))==False:
-        os.makedirs(os.path.join(config['folder_out'],'climate_model_data','figures'))
+    if os.path.isdir(os.path.join(config['folder_out'],script_name,'figures'))==False:
+        os.makedirs(os.path.join(config['folder_out'],script_name,'figures'))
 
     # Loop over variables
     for vv in np.arange(len(variables)):
@@ -92,7 +94,7 @@ def main():
                     member = members[ee]
                     
                     # Check if already processed
-                    if os.path.isfile(os.path.join(config['folder_out'],'climate_model_data',scenario+'_'+model+'_'+member+'_'+variable+'.npz')):
+                    if os.path.isfile(os.path.join(config['folder_out'],script_name,scenario+'_'+model+'_'+member+'_'+variable+'.npz')):
                         continue
                     
                     # List of files to be loaded
@@ -132,7 +134,7 @@ def main():
                     if mem_usage>max_memory_usage:
                         print('Skipping because too much data for memory')
                         continue
-                    data = np.zeros((ncdata.shape[1],ncdata.shape[2],len(DatesMon)),dtype=np.single)*np.NaN
+                    data = np.zeros((ncdata.shape[1],ncdata.shape[2],len(DatesMon)),dtype=np.single)*np.nan
                     
                     # Resample mask to compute land surface mean time series
                     mask_small = resize_local_mean(mask_full.astype(np.single),(ncdata.shape[1],ncdata.shape[2]))>0.5
@@ -180,15 +182,15 @@ def main():
                     lon = -180+np.arange(360/resx)*resx+resx/2 
                     xi, yi = np.meshgrid(lon, lat)
                     area_map = (40075*resx/360)**2*np.cos(np.deg2rad(yi)) # Grid-cell area in km2
-                    data_mean_yr = np.zeros((data.shape[0],data.shape[1],len(Years)),dtype=np.single)*np.NaN
-                    data_min_yr = np.zeros((data.shape[0],data.shape[1],len(Years)),dtype=np.single)*np.NaN
-                    data_max_yr = np.zeros((data.shape[0],data.shape[1],len(Years)),dtype=np.single)*np.NaN
-                    ts_mean_yr = np.zeros((len(Years),),dtype=np.single)*np.NaN
-                    ts_min_yr = np.zeros((len(Years),),dtype=np.single)*np.NaN
-                    ts_max_yr = np.zeros((len(Years),),dtype=np.single)*np.NaN
-                    ts_mean_yr_land = np.zeros((len(Years),),dtype=np.single)*np.NaN
-                    ts_min_yr_land = np.zeros((len(Years),),dtype=np.single)*np.NaN
-                    ts_max_yr_land = np.zeros((len(Years),),dtype=np.single)*np.NaN
+                    data_mean_yr = np.zeros((data.shape[0],data.shape[1],len(Years)),dtype=np.single)*np.nan
+                    data_min_yr = np.zeros((data.shape[0],data.shape[1],len(Years)),dtype=np.single)*np.nan
+                    data_max_yr = np.zeros((data.shape[0],data.shape[1],len(Years)),dtype=np.single)*np.nan
+                    ts_mean_yr = np.zeros((len(Years),),dtype=np.single)*np.nan
+                    ts_min_yr = np.zeros((len(Years),),dtype=np.single)*np.nan
+                    ts_max_yr = np.zeros((len(Years),),dtype=np.single)*np.nan
+                    ts_mean_yr_land = np.zeros((len(Years),),dtype=np.single)*np.nan
+                    ts_min_yr_land = np.zeros((len(Years),),dtype=np.single)*np.nan
+                    ts_max_yr_land = np.zeros((len(Years),),dtype=np.single)*np.nan
                     for yy in np.arange(len(Years)):
                         sel = DatesMon.year==Years[yy]
                         if sum(sel)==12:
@@ -212,7 +214,7 @@ def main():
                     # Unfortunately, the default compression level cannot be changed, so this is slow
                     print('Saving data to npz')
                     t0 = time.time()
-                    np.savez_compressed(os.path.join(config['folder_out'],'climate_model_data',scenario+'_'+model+'_'+member+'_'+variable+'.npz'),\
+                    np.savez_compressed(os.path.join(config['folder_out'],script_name,scenario+'_'+model+'_'+member+'_'+variable+'.npz'),\
                         data=data,data_mean_yr=data_mean_yr,data_min_yr=data_min_yr,data_max_yr=data_max_yr,\
                         ts_mean_yr=ts_mean_yr,ts_min_yr=ts_min_yr,ts_max_yr=ts_max_yr,\
                         ts_mean_yr_land=ts_mean_yr_land,ts_min_yr_land=ts_min_yr_land,ts_max_yr_land=ts_max_yr_land,\
@@ -224,7 +226,7 @@ def main():
                         t0 = time.time()
                         plt.figure(1)
                         plt.plot(np.squeeze(data[50,50,:]))
-                        plt.savefig(os.path.join(config['folder_out'],'climate_model_data','figures',variable+'_'+scenario+'_'+model+'_'+member+'_ts.png'))                    
+                        plt.savefig(os.path.join(config['folder_out'],script_name,'figures',variable+'_'+scenario+'_'+model+'_'+member+'_ts.png'))                    
                         plt.figure(2)
                         if variable=='pr':
                             plt.imshow(data[:,:,200],vmin=-20,vmax=200)
@@ -233,7 +235,7 @@ def main():
                         else:
                             plt.imshow(data[:,:,200])
                         plt.colorbar()
-                        plt.savefig(os.path.join(config['folder_out'],'climate_model_data','figures',variable+'_'+scenario+'_'+model+'_'+member+'_map.png'))
+                        plt.savefig(os.path.join(config['folder_out'],script_name,'figures',variable+'_'+scenario+'_'+model+'_'+member+'_map.png'))
                         print("Time elapsed is "+str(time.time()-t0)+" sec")
                         plt.close('all')
                     
