@@ -43,18 +43,24 @@ def main():
         os.path.join(config['folder_out'], 'climatologies_step2_future')
     ]
 
-    subfolders = [
-        os.path.join(parent, name)
-        for parent in folders
-        for name in os.listdir(parent)
-        if os.path.isdir(os.path.join(parent, name))
-    ]
-
+    subfolders = []
+    for root_folder in folders:
+        for dirpath, dirnames, _ in os.walk(root_folder):
+            for dirname in dirnames:
+                subfolders.append(os.path.join(dirpath, dirname))
+                
     # Loop over all files and convert to netCDF
     for subfolder in subfolders:
         files = glob.glob(os.path.join(subfolder,'*.nc'))
         for file in files:
             suffix_full = str(180/config['mapsize'][0]).replace('.','p')[:10]
+            
+            # Copy full-resolution Koppen-Geiger maps to output folder for completeness
+            if 'koppen_geiger_'+suffix_full+'.nc' in file:
+                ncout = os.path.join(config['folder_out'],script_name,subfolder.replace(folders[0], '').replace(folders[1], '')[1:],os.path.basename(file))
+                print('Creating '+ncout)
+                shutil.copyfile(file,ncout)
+
             for upscale_mapsize in config['upscale_mapsizes']:
                 suffix_resample = str(180/upscale_mapsize[0]).replace('.','p')                
                 
@@ -62,13 +68,13 @@ def main():
                 if ('ensemble_mean_'+suffix_full+'.nc' in file) | ('ensemble_std_'+suffix_full+'.nc' in file): 
                     t0 = time.time()
                     filename_new = os.path.basename(file).replace(suffix_full,suffix_resample)
-                    ncout = os.path.join(config['folder_out'],script_name,os.path.basename(os.path.normpath(subfolder)),filename_new)
-                    os.makedirs(os.path.dirname(ncout), exist_ok=True)
+                    ncout = os.path.join(config['folder_out'],script_name,subfolder.replace(folders[0], '').replace(folders[1], '')[1:],filename_new)
                     if (os.path.isfile(ncout)) & (config['skip_existing']==True):
                         continue
                     elif (os.path.isfile(ncout)) & (config['skip_existing']==False):
                         os.remove(ncout)
                     print('Creating '+ncout)
+                    os.makedirs(os.path.dirname(ncout), exist_ok=True)
                     with Dataset(file) as dset:
                         for month in np.arange(1,13):
                             for vv in np.arange(len(config['vars'])):
@@ -76,12 +82,12 @@ def main():
                                 data = tools.mapresize(data,upscale_mapsize,measure='mean',nantol=0.75)
                                 tools.write_to_netcdf_3d(ncout,data,config['vars'][vv][1],config['vars'][vv][2],month,1)
                     print("Time elapsed is "+str(time.time()-t0)+" sec")
-                
+                    
                 # Resample Koppen-Geiger maps
                 if 'koppen_geiger_'+suffix_full+'.nc' in file:
                     t0 = time.time()
                     filename_new = os.path.basename(file).replace(suffix_full,suffix_resample)
-                    ncout = os.path.join(config['folder_out'],script_name,os.path.basename(os.path.normpath(subfolder)),filename_new)
+                    ncout = os.path.join(config['folder_out'],script_name,subfolder.replace(folders[0], '').replace(folders[1], '')[1:],filename_new)
                     if (os.path.isfile(ncout)) & (config['skip_existing']==True):
                         continue
                     elif (os.path.isfile(ncout)) & (config['skip_existing']==False):
@@ -95,9 +101,6 @@ def main():
                     tools.write_to_netcdf_2d(ncout,kg_class,'kg_class','',1)
                     tools.write_to_netcdf_2d(ncout,kg_confidence,'kg_confidence','%',1)
                     print("Time elapsed is "+str(time.time()-t0)+" sec")
-    
-    print('First part finished!!!!!!!!!1')
-    pdb.set_trace()
     
     
     #==============================================================================
@@ -116,7 +119,7 @@ def main():
         for file in files:
             t0 = time.time()
             filename_new = os.path.basename(file).replace('.nc','.tif')
-            ncout = os.path.join(config['folder_out'],script_name,os.path.basename(os.path.normpath(subfolder)),filename_new)
+            ncout = os.path.join(config['folder_out'],script_name,subfolder.replace(folders[0], '').replace(folders[1], '')[1:],filename_new)
             if (os.path.isfile(ncout)) & (config['skip_existing']==True):
                 continue
             elif (os.path.isfile(ncout)) & (config['skip_existing']==False):
@@ -126,12 +129,12 @@ def main():
                 data = np.array(dset.variables['kg_class'][:])
             tools.write_to_geotiff(ncout,data,cmap,0)
             print("Time elapsed is "+str(time.time()-t0)+" sec")
-   
+    
     
     #==============================================================================
     #   Make zip files
     #==============================================================================
-
+    
     # Delete existing zip files
     filelist = glob.glob(os.path.join(config['folder_out'],script_name,'*.zip'))
     for filepath in filelist:
