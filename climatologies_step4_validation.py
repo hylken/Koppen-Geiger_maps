@@ -57,14 +57,14 @@ def main():
             
             # Load global Koppen-Geiger map
             suffix = str(180/config['upscale_mapsizes'][0][0]).replace('.','p')
-            ncfile1 = os.path.join(config['folder_out'],'climatologies',str(period[0])+'_'+str(period[1]),'koppen_geiger_'+suffix+'.nc')
-            ncfile2 = os.path.join(config['folder_out'],'climatologies',str(period[0])+'_'+str(period[1]),scenario,'koppen_geiger_'+suffix+'.nc')
+            ncfile1 = os.path.join(config['folder_out'],'climatologies_step1_historical',str(period[0])+'_'+str(period[1]),'koppen_geiger_'+suffix+'.nc')
+            ncfile2 = os.path.join(config['folder_out'],'climatologies_step2_future',str(period[0])+'_'+str(period[1]),scenario,'koppen_geiger_'+suffix+'.nc')
             if os.path.isfile(ncfile1):
                 ncfile = ncfile1
             elif os.path.isfile(ncfile2):
                 ncfile = ncfile2
             else:
-                raise Exception("Unable to load map")
+                raise Exception(f'Unable to load {ncfile1} or {ncfile2}')
             print('loading '+ncfile)
             dset = Dataset(ncfile)
             kg_class = np.array(dset.variables['kg_class'][:]).astype(int)
@@ -116,9 +116,9 @@ def main():
                         count +=1
                     
         # Save results
-        df_kg_major_area_pct.to_csv(os.path.join(config['folder_out'],script_name,scenario+'_kg_major_area_pct.csv'),index=False)
-        df_kg_major_area_mm2.to_csv(os.path.join(config['folder_out'],script_name,scenario+'_kg_major_area_mm2.csv'),index=False)
-        df_transitions_mm2.to_csv(os.path.join(config['folder_out'],script_name,scenario+'_transitions_mm2.csv'),index=False)
+        df_kg_major_area_pct.to_csv(os.path.join('.',script_name,scenario+'_kg_major_area_pct.csv'),index=False)
+        df_kg_major_area_mm2.to_csv(os.path.join('.',script_name,scenario+'_kg_major_area_mm2.csv'),index=False)
+        df_transitions_mm2.to_csv(os.path.join('.',script_name,scenario+'_transitions_mm2.csv'),index=False)
         
         # Compute percentage of land surface that changes
         mask_land = kg_maps[:,:,0]!=0        
@@ -132,8 +132,10 @@ def main():
         df_kg_major_change_prct.loc[scenario] = [diff1,diff2]
         
     # Save results
-    df_kg_major_change_prct.to_csv(os.path.join(config['folder_out'],script_name,'kg_major_change_prct.csv'),index=False)
+    df_kg_major_change_prct.to_csv(os.path.join('.',script_name,'kg_major_change_prct.csv'),index=False)
    
+    pdb.set_trace()
+    
     
     #==============================================================================
     #   Load station data and compute KG classes
@@ -309,7 +311,7 @@ def main():
     df_accuracy.set_index('Period',inplace=True)
     if os.path.isdir(os.path.join(config['folder_out'],script_name))==False:
         os.makedirs(os.path.join(config['folder_out'],script_name))
-    df_accuracy.to_csv(os.path.join(config['folder_out'],script_name,'accuracy.csv'))
+    df_accuracy.to_csv(os.path.join('.',script_name,'accuracy.csv'))
     
     pdb.set_trace()
 

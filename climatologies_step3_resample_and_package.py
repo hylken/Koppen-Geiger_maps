@@ -59,45 +59,46 @@ def main():
                 suffix_resample = str(180/upscale_mapsize[0]).replace('.','p')                
                 
                 # Resample precipitation and air temperature climatologies
-                if (file=='ensemble_mean_'+suffix_full+'.nc') | (file=='ensemble_std_'+suffix_full+'.nc'): 
+                if ('ensemble_mean_'+suffix_full+'.nc' in file) | ('ensemble_std_'+suffix_full+'.nc' in file): 
                     t0 = time.time()
-                    file_new = file.replace(suffix_full,suffix_resample)
-                    ncout = os.path.join(config['folder_out'],script_name,os.path.basename(os.path.normpath(subfolder)),file_new)
+                    filename_new = os.path.basename(file).replace(suffix_full,suffix_resample)
+                    ncout = os.path.join(config['folder_out'],script_name,os.path.basename(os.path.normpath(subfolder)),filename_new)
                     os.makedirs(os.path.dirname(ncout), exist_ok=True)
                     if (os.path.isfile(ncout)) & (config['skip_existing']==True):
                         continue
                     elif (os.path.isfile(ncout)) & (config['skip_existing']==False):
                         os.remove(ncout)
                     print('Creating '+ncout)
-                    dset = Dataset(os.path.join(root,file))
-                    for month in np.arange(1,13):
-                        for vv in np.arange(len(config['vars'])):
-                            data = np.array(dset.variables[config['vars'][vv][1]][month-1,:,:])
-                            data = tools.mapresize(data,upscale_mapsize,measure='mean',nantol=0.75)
-                            tools.write_to_netcdf_3d(ncout,data,config['vars'][vv][1],config['vars'][vv][2],month,1)
-                    dset.close()                    
+                    with Dataset(file) as dset:
+                        for month in np.arange(1,13):
+                            for vv in np.arange(len(config['vars'])):
+                                data = np.array(dset.variables[config['vars'][vv][1]][month-1,:,:])
+                                data = tools.mapresize(data,upscale_mapsize,measure='mean',nantol=0.75)
+                                tools.write_to_netcdf_3d(ncout,data,config['vars'][vv][1],config['vars'][vv][2],month,1)
                     print("Time elapsed is "+str(time.time()-t0)+" sec")
                 
                 # Resample Koppen-Geiger maps
-                if file=='koppen_geiger_'+suffix_full+'.nc':
+                if 'koppen_geiger_'+suffix_full+'.nc' in file:
                     t0 = time.time()
-                    file_new = file.replace(suffix_full,suffix_resample)
-                    ncout = os.path.join(config['folder_out'],script_name,os.path.basename(os.path.normpath(subfolder)),file_new)
+                    filename_new = os.path.basename(file).replace(suffix_full,suffix_resample)
+                    ncout = os.path.join(config['folder_out'],script_name,os.path.basename(os.path.normpath(subfolder)),filename_new)
                     if (os.path.isfile(ncout)) & (config['skip_existing']==True):
                         continue
                     elif (os.path.isfile(ncout)) & (config['skip_existing']==False):
                         os.remove(ncout)
                     print('Creating '+ncout)
-                    dset = Dataset(os.path.join(root,file))
-                    kg_class = np.array(dset.variables['kg_class'][:])
-                    kg_class = tools.mapresize(kg_class,upscale_mapsize,measure='mode',nantol=0.75,nanint=kg_class[0,0])
-                    kg_confidence = np.array(dset.variables['kg_confidence'][:])
-                    kg_confidence = tools.mapresize(kg_confidence,upscale_mapsize,measure='mean',nantol=0.75)
-                    dset.close()
+                    with Dataset(file) as dset:
+                        kg_class = np.array(dset.variables['kg_class'][:])
+                        kg_class = tools.mapresize(kg_class,upscale_mapsize,measure='mode',nantol=0.75,nanint=kg_class[0,0])
+                        kg_confidence = np.array(dset.variables['kg_confidence'][:])
+                        kg_confidence = tools.mapresize(kg_confidence,upscale_mapsize,measure='mean',nantol=0.75)
                     tools.write_to_netcdf_2d(ncout,kg_class,'kg_class','',1)
                     tools.write_to_netcdf_2d(ncout,kg_confidence,'kg_confidence','%',1)
                     print("Time elapsed is "+str(time.time()-t0)+" sec")
-                
+    
+    print('First part finished!!!!!!!!!1')
+    pdb.set_trace()
+    
     
     #==============================================================================
     #   Convert the Koppen-Geiger maps to geoTIFF
@@ -114,15 +115,15 @@ def main():
         files = glob.glob(os.path.join(subfolder,'*koppen_geiger*.nc'))
         for file in files:
             t0 = time.time()
-            ncout = os.path.join(config['folder_out'],script_name,os.path.basename(os.path.normpath(subfolder)),file.replace('.nc','.tif'))
+            filename_new = os.path.basename(file).replace('.nc','.tif')
+            ncout = os.path.join(config['folder_out'],script_name,os.path.basename(os.path.normpath(subfolder)),filename_new)
             if (os.path.isfile(ncout)) & (config['skip_existing']==True):
                 continue
             elif (os.path.isfile(ncout)) & (config['skip_existing']==False):
                 os.remove(ncout)
             print('Creating '+ncout)
-            dset = Dataset(os.path.join(root,file))
-            data = np.array(dset.variables['kg_class'][:])
-            dset.close()
+            with Dataset(file) as dset:
+                data = np.array(dset.variables['kg_class'][:])
             tools.write_to_geotiff(ncout,data,cmap,0)
             print("Time elapsed is "+str(time.time()-t0)+" sec")
    

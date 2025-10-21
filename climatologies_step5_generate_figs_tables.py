@@ -9,6 +9,7 @@ import os
 import sys
 import pdb
 import time
+import glob
 import pandas as pd
 import numpy as np
 import tools
@@ -80,7 +81,7 @@ def main():
                 dset.close()
                 data[data==0] = np.nan
                 for rr in np.arange(len(regions)):
-                    fname = regions[rr][0]+'_'+file).replace('.nc','.png').replace(os.path.sep,'_')
+                    fname = (regions[rr][0]+'_'+file).replace('.nc','.png').replace(os.path.sep,'_')
                     figout = os.path.join('.',script_name,fname)
                     tools.plot_map(
                         data=data,
@@ -138,10 +139,7 @@ def main():
         df_kg_major_area_pct = pd.read_csv(os.path.join(config['folder_out'],'climatologies_step4_validation',scenario+'_kg_major_area_pct.csv'),index_col=0)
         df_kg_major_area_mm2 = pd.read_csv(os.path.join(config['folder_out'],'climatologies_step4_validation',scenario+'_kg_major_area_mm2.csv'),index_col=0)
         df_transitions_mm2 = pd.read_csv(os.path.join(config['folder_out'],'climatologies_step4_validation',scenario+'_transitions_mm2.csv'),index_col=None)
-        if scenario=='ssp245':
-            print('Pausing')
-            pdb.set_trace()
-            
+
         # Make node and link lists
         node_colors, node_areas_mm2, node_areas_pct = [], [], []
         link_sources, link_targets = [], []

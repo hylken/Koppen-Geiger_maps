@@ -85,7 +85,7 @@ def main():
                 files = glob.glob(os.path.join(config['folder_out'], 'climate_model_step1_data_to_npz', scenario+'_'+model+'_*_tas.npz'))
                 members = [os.path.basename(x).split('_')[2] for x in files]
                 if len(members)==0:
-                    print('No ensemble members available, skipping')
+                    print('No ensemble members available (not even 1), skipping')
                     continue
                     
                 # Loop over variables and ensemble members
@@ -154,7 +154,7 @@ def main():
                         # Load high-res historic reference climatology
                         period_historic = config['periods_historical'][-1]
                         suffix = str(180/config['mapsize'][0]).replace('.','p')[:10]
-                        dset = Dataset(os.path.join(config['folder_out'],script_name, \
+                        dset = Dataset(os.path.join(config['folder_out'],'climatologies_step1_historical', \
                             str(period_historic[0])+'_'+str(period_historic[1]),'ensemble_mean_'+suffix+'.nc'))
                         data = np.array(dset.variables[config['vars'][vv][1]][month-1,:,:],dtype=np.single)
                         dset.close()
