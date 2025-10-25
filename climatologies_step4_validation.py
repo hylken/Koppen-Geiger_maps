@@ -57,8 +57,8 @@ def main():
             
             # Load global Koppen-Geiger map
             suffix = str(180/config['upscale_mapsizes'][0][0]).replace('.','p')
-            ncfile1 = os.path.join(config['folder_out'],'climatologies_step1_historical',str(period[0])+'_'+str(period[1]),'koppen_geiger_'+suffix+'.nc')
-            ncfile2 = os.path.join(config['folder_out'],'climatologies_step2_future',str(period[0])+'_'+str(period[1]),scenario,'koppen_geiger_'+suffix+'.nc')
+            ncfile1 = os.path.join(config['folder_out'],'climatologies_step3_resample_and_package',str(period[0])+'_'+str(period[1]),'koppen_geiger_'+suffix+'.nc')
+            ncfile2 = os.path.join(config['folder_out'],'climatologies_step3_resample_and_package',str(period[0])+'_'+str(period[1]),scenario,'koppen_geiger_'+suffix+'.nc')
             if os.path.isfile(ncfile1):
                 ncfile = ncfile1
             elif os.path.isfile(ncfile2):
@@ -66,9 +66,8 @@ def main():
             else:
                 raise Exception(f'Unable to load {ncfile1} or {ncfile2}')
             print('loading '+ncfile)
-            dset = Dataset(ncfile)
-            kg_class = np.array(dset.variables['kg_class'][:]).astype(int)
-            dset.close()
+            with Dataset(ncfile) as dset:
+                kg_class = np.array(dset.variables['kg_class'][:]).astype(int)
             
             # Compute map of major classes
             kg_major = np.zeros(kg_class.shape,dtype=int)
@@ -116,6 +115,7 @@ def main():
                         count +=1
                     
         # Save results
+        os.makedirs(os.path.join('.',script_name), exist_ok=True)
         df_kg_major_area_pct.to_csv(os.path.join('.',script_name,scenario+'_kg_major_area_pct.csv'),index=False)
         df_kg_major_area_mm2.to_csv(os.path.join('.',script_name,scenario+'_kg_major_area_mm2.csv'),index=False)
         df_transitions_mm2.to_csv(os.path.join('.',script_name,scenario+'_transitions_mm2.csv'),index=False)
@@ -141,14 +141,14 @@ def main():
     #   Load station data and compute KG classes
     #==============================================================================
 
-    if os.path.isfile(os.path.join(config['folder_out'],'climatologies_validation','station_data.pickle')):
+    if os.path.isfile(os.path.join(config['folder_out'],script_name,'station_data.pickle')):
         print('===============================================================================')
         print('Loading existing station data file')        
         t = time.time()
-        station_data = pickle.load(open(os.path.join(config['folder_out'],'climatologies_validation','station_data.pickle'),'rb'))
+        station_data = pickle.load(open(os.path.join(config['folder_out'],script_name,'station_data.pickle'),'rb'))
         print("Time elapsed is "+str(time.time()-t)+" sec")
 
-    if os.path.isfile(os.path.join(config['folder_out'],'climatologies_validation','station_data.pickle'))==False:
+    if os.path.isfile(os.path.join(config['folder_out'],script_name,'station_data.pickle'))==False:
         print('===============================================================================')
         print('Loading station data')
         dates_daily = pd.date_range(start=pd.to_datetime(datetime(1900,1,1)),end=pd.to_datetime('today'), freq='D')
@@ -213,9 +213,9 @@ def main():
             
             print("Time elapsed is "+str(time.time()-t0)+" sec")
             
-        if os.path.isdir(os.path.join(config['folder_out'],'climatologies_validation'))==False:
-            os.makedirs(os.path.join(config['folder_out'],'climatologies_validation'))        
-        with open(os.path.join(config['folder_out'],'climatologies_validation','station_data.pickle'), 'wb') as f:
+        if os.path.isdir(os.path.join(config['folder_out'],script_name))==False:
+            os.makedirs(os.path.join(config['folder_out'],script_name))        
+        with open(os.path.join(config['folder_out'],script_name,'station_data.pickle'), 'wb') as f:
             pickle.dump(station_data, f)
         
 

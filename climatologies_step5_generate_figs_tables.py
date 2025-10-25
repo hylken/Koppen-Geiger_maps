@@ -47,74 +47,59 @@ def main():
     #==============================================================================
     
     regions = [
-        ['World',(-180, 180, -60, 84),False,(10,5)],
-        ['Alps',(6,14,42,50),True,(2.8,2.8)],
-        ['Rocky Mts.',(-122.05,-112,44,54),True,(2.8,2.8)]
+        ['World',       (-180, 180, -60, 84),   False,  (10,5)],
+        ['Alps',        (6,14,42,50),           True,   (2.8,2.8)],
+        ['Rocky Mts.',  (-122.05,-112,44,54),   True,   (2.8,2.8)]
         ]
         
     # Create output folder if it doesn't exist
-    if os.path.isdir(os.path.join('.',script_name))==False:
-        os.makedirs(os.path.join('.',script_name))        
-    
-    folders = [
-        os.path.join(config['folder_out'], 'climatologies_step1_historical'),
-        os.path.join(config['folder_out'], 'climatologies_step2_future')
-    ]
+    os.makedirs(os.path.join('.',script_name), exist_ok=True)
 
-    subfolders = [
-        os.path.join(parent, name)
-        for parent in folders
-        for name in os.listdir(parent)
-        if os.path.isdir(os.path.join(parent, name))
-    ]
 
-    # Loop over all files and convert to netCDF
-    for subfolder in subfolders:
-        files = glob.glob(os.path.join(subfolder,'*.nc'))
-        for file in files:
-            suffix = str(180/config['mapsize'][0]).replace('.','p')
-            if file.endswith('koppen_geiger_'+suffix+'.nc'): 
-                t0 = time.time()
-                print('Producing figures of '+file)
-                dset = Dataset(file)
-                data = np.array(dset.variables['kg_class'][:]).astype(np.single)
-                dset.close()
+    # Loop over scenarios and periods
+    df_kg_major_change_prct = pd.DataFrame(np.zeros((len(scenarios),2))*np.nan,index=scenarios,columns=['1901-1930 to 1991-2020','1991-2020 to 2071-2100'])    
+    for scenario in scenarios:
+        print('===============================================================================')
+        print('Compute areas covered by major KG classes and transitions for '+scenario)
+        kg_maps = np.zeros((mapsize[0],mapsize[1],len(periods)),dtype=np.single)*np.nan
+        for pp in np.arange(len(periods)):
+            period = periods[pp]
+            
+            # Load global Koppen-Geiger map
+            suffix = str(180/config['upscale_mapsizes'][0][0]).replace('.','p')
+            ncfile1 = os.path.join(config['folder_out'],'climatologies_step3_resample_and_package',str(period[0])+'_'+str(period[1]),'koppen_geiger_'+suffix+'.nc')
+            ncfile2 = os.path.join(config['folder_out'],'climatologies_step3_resample_and_package',str(period[0])+'_'+str(period[1]),scenario,'koppen_geiger_'+suffix+'.nc')
+            if os.path.isfile(ncfile1):
+                ncfile = ncfile1
+            elif os.path.isfile(ncfile2):
+                ncfile = ncfile2
+            else:
+                raise Exception(f'Unable to load {ncfile1} or {ncfile2}')
+            print('loading '+ncfile)
+            with Dataset(ncfile) as dset:
+                data = np.array(dset.variables['kg_class'][:]).astype(int)
                 data[data==0] = np.nan
-                for rr in np.arange(len(regions)):
-                    fname = (regions[rr][0]+'_'+file).replace('.nc','.png').replace(os.path.sep,'_')
-                    figout = os.path.join('.',script_name,fname)
-                    tools.plot_map(
-                        data=data,
-                        data_extent=(-180, 180, -90, 90),
-                        figout=figout,
-                        figdims=regions[rr][3],
-                        cmap=kg_cmap,
-                        plot_extent=regions[rr][1],
-                        lims=(0.5,30.5),
-                        interpolation='nearest',
-                        shp=country_shp,
-                        color='k',
-                        show_axes=regions[rr][2]
-                        )
-                print("Time elapsed is "+str(time.time()-t0)+" sec")
-    
-
-    #==============================================================================
-    #   Generate LaTeX table of classification accuracy
-    #==============================================================================
-
-    df_accuracy = pd.read_csv(os.path.join('.','climatologies_step4_validation','accuracy.csv'),index_col=0)
-    
-    with open(os.path.join('.',script_name,'accuracy.tex'), 'w') as f:
-        for pp in np.arange(df_accuracy.shape[0]):
-            f.write(df_accuracy.index[pp].replace('(','').replace(')','').replace(', ','--')+' & ')
-            f.write('$'+"{:.0f}".format(df_accuracy.iloc[pp,0])+'$ & ')
-            f.write('$'+"{:.1f}".format(df_accuracy.iloc[pp,1])+'$ & ')
-            f.write('$'+"{:.1f}".format(df_accuracy.iloc[pp,2])+'$ && ')
-            f.write('$'+"{:.1f}".format(df_accuracy.iloc[pp,3])+'$ & ')
-            f.write('$'+"{:.1f}".format(df_accuracy.iloc[pp,4])+'$')
-            if pp<df_accuracy.shape[0]-1:
-                f.write('\\\\\n')
+                
+            # Loop over regions
+            for rr in np.arange(len(regions)):
+                #fname = (regions[rr][0]+'_'+file).replace('.nc','.png').replace(os.path.sep,'_')
+                fname = f'{period[0]}_{period[1]}_{scenario}_{regions[rr][0]}_{os.path.basename(ncfile).replace(".nc",".png")}'
+                pdb.set_trace()
+                figout = os.path.join('.',script_name,fname)
+                tools.plot_map(
+                    data=data,
+                    data_extent=(-180, 180, -90, 90),
+                    figout=figout,
+                    figdims=regions[rr][3],
+                    cmap=kg_cmap,
+                    plot_extent=regions[rr][1],
+                    lims=(0.5,30.5),
+                    interpolation='nearest',
+                    shp=country_shp,
+                    color='k',
+                    show_axes=regions[rr][2]
+                    )
+            print("Time elapsed is "+str(time.time()-t0)+" sec")
 
 
     #==============================================================================
@@ -189,6 +174,25 @@ def main():
         outfile = os.path.join('.',script_name,scenario+'_sankey.pdf')
         fig.write_image(outfile)
         print(outfile)
+
+
+    #==============================================================================
+    #   Generate LaTeX table of classification accuracy
+    #==============================================================================
+
+    df_accuracy = pd.read_csv(os.path.join('.','climatologies_step4_validation','accuracy.csv'),index_col=0)
+    
+    with open(os.path.join('.',script_name,'accuracy.tex'), 'w') as f:
+        for pp in np.arange(df_accuracy.shape[0]):
+            f.write(df_accuracy.index[pp].replace('(','').replace(')','').replace(', ','--')+' & ')
+            f.write('$'+"{:.0f}".format(df_accuracy.iloc[pp,0])+'$ & ')
+            f.write('$'+"{:.1f}".format(df_accuracy.iloc[pp,1])+'$ & ')
+            f.write('$'+"{:.1f}".format(df_accuracy.iloc[pp,2])+'$ && ')
+            f.write('$'+"{:.1f}".format(df_accuracy.iloc[pp,3])+'$ & ')
+            f.write('$'+"{:.1f}".format(df_accuracy.iloc[pp,4])+'$')
+            if pp<df_accuracy.shape[0]-1:
+                f.write('\\\\\n')
+
         
     pdb.set_trace()
     
