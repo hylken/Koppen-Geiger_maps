@@ -21,6 +21,7 @@ import warnings
 import shapefile
 import plotly.express as px
 import plotly.graph_objects as go
+from matplotlib import font_manager as fm, pyplot as plt
         
 def main():
 
@@ -32,7 +33,8 @@ def main():
     np.set_printoptions(suppress=True)
     config = tools.load_config(sys.argv[1])
     script_name = os.path.basename(sys.argv[0]).replace('.py', '')
-    plt.rcParams["font.family"] = "Myriad Pro" # Available in assets folder
+    fm.fontManager.addfont(os.path.join('assets','Myriad Pro Regular.ttf'))
+    plt.rcParams["font.family"] = "Myriad Pro"
     
     koppen_table = pd.read_csv(os.path.join('assets','koppen_table.csv'))
     country_shp = shapefile.Reader(os.path.join('assets','TM_WORLD_BORDERS-0.3','TM_WORLD_BORDERS-0.3.shp'),encoding='ISO8859-1')
@@ -50,7 +52,54 @@ def main():
     periods = config['periods_historical']+config['periods_future']
     scenarios = ['ssp119','ssp126','ssp245','ssp370','ssp434','ssp460','ssp585']
     
+        
+    #==============================================================================
+    #   Generate figures of Koppen-Geiger maps for periods and scenarios
+    #==============================================================================
     
+    # Loop over scenarios and periods
+    for scenario in scenarios:
+    
+        print('===============================================================================')
+        print('Generating figures for '+scenario)
+        for pp in np.arange(len(periods)):
+            period = periods[pp]
+            
+            # Load global Koppen-Geiger map
+            suffix_full = str(180/config['mapsize'][0]).replace('.','p')[:10]
+            ncfile1 = os.path.join(config['folder_out'],'climatologies_step3_resample_and_package',str(period[0])+'_'+str(period[1]),'koppen_geiger_'+suffix_full+'.nc')
+            ncfile2 = os.path.join(config['folder_out'],'climatologies_step3_resample_and_package',str(period[0])+'_'+str(period[1]),scenario,'koppen_geiger_'+suffix_full+'.nc')
+            if os.path.isfile(ncfile1):
+                ncfile = ncfile1
+            elif os.path.isfile(ncfile2):
+                ncfile = ncfile2
+            else:
+                raise Exception(f'Unable to load {ncfile1} or {ncfile2}')
+            print('loading '+ncfile)
+            with Dataset(ncfile) as dset:
+                data = np.array(dset.variables['kg_class'][:]).astype(np.single)
+                data[data==0] = np.nan
+                
+            # Loop over regions
+            for rr in np.arange(len(regions)):
+                fname = f'{period[0]}_{period[1]}_{scenario}_{regions[rr][0].replace(" ","_")}_{os.path.basename(ncfile).replace(".nc",".png")}'
+                figout = os.path.join('.',script_name,fname)
+                os.makedirs(os.path.join('.',script_name), exist_ok=True)
+                tools.plot_map(
+                    data=data,
+                    data_extent=(-180, 180, -90, 90),
+                    figout=figout,
+                    figdims=regions[rr][3],
+                    cmap=kg_cmap,
+                    plot_extent=regions[rr][1],
+                    lims=(0.5,30.5),
+                    interpolation='nearest',
+                    shp=country_shp,
+                    color='k',
+                    show_axes=regions[rr][2]
+                    )
+
+
     #==============================================================================
     #   Generate Sankey diagrams
     #==============================================================================
@@ -123,54 +172,6 @@ def main():
         print(f'Created {outfile}')
         
         
-    #==============================================================================
-    #   Generate figures of Koppen-Geiger maps for periods and scenarios
-    #==============================================================================
-    
-    # Loop over scenarios and periods
-    for scenario in scenarios:
-    
-        print('===============================================================================')
-        print('Generating figures for '+scenario)
-        for pp in np.arange(len(periods)):
-            period = periods[pp]
-            
-            # Load global Koppen-Geiger map
-            suffix_full = str(180/config['mapsize'][0]).replace('.','p')[:10]
-            ncfile1 = os.path.join(config['folder_out'],'climatologies_step3_resample_and_package',str(period[0])+'_'+str(period[1]),'koppen_geiger_'+suffix_full+'.nc')
-            ncfile2 = os.path.join(config['folder_out'],'climatologies_step3_resample_and_package',str(period[0])+'_'+str(period[1]),scenario,'koppen_geiger_'+suffix_full+'.nc')
-            if os.path.isfile(ncfile1):
-                ncfile = ncfile1
-            elif os.path.isfile(ncfile2):
-                ncfile = ncfile2
-            else:
-                raise Exception(f'Unable to load {ncfile1} or {ncfile2}')
-            print('loading '+ncfile)
-            with Dataset(ncfile) as dset:
-                data = np.array(dset.variables['kg_class'][:]).astype(np.single)
-                data[data==0] = np.nan
-                
-            # Loop over regions
-            for rr in np.arange(len(regions)):
-                fname = f'{period[0]}_{period[1]}_{scenario}_{regions[rr][0]}_{os.path.basename(ncfile).replace(".nc",".png")}'
-                figout = os.path.join('.',script_name,fname)
-                os.makedirs(os.path.join('.',script_name), exist_ok=True)
-                tools.plot_map(
-                    data=data,
-                    data_extent=(-180, 180, -90, 90),
-                    figout=figout,
-                    figdims=regions[rr][3],
-                    cmap=kg_cmap,
-                    plot_extent=regions[rr][1],
-                    lims=(0.5,30.5),
-                    interpolation='nearest',
-                    shp=country_shp,
-                    color='k',
-                    show_axes=regions[rr][2]
-                    )
-            print("Time elapsed is "+str(time.time()-t0)+" sec")
-
-
     #==============================================================================
     #   Generate LaTeX table of classification accuracy
     #==============================================================================
