@@ -32,7 +32,7 @@ def main():
     np.set_printoptions(suppress=True)
     config = tools.load_config(sys.argv[1])
     script_name = os.path.basename(sys.argv[0]).replace('.py', '')
-    plt.rcParams["font.family"] = "Myriad pro"
+    plt.rcParams["font.family"] = "Myriad Pro" # Available in assets folder
     
     koppen_table = pd.read_csv(os.path.join('assets','koppen_table.csv'))
     country_shp = shapefile.Reader(os.path.join('assets','TM_WORLD_BORDERS-0.3','TM_WORLD_BORDERS-0.3.shp'),encoding='ISO8859-1')
@@ -41,73 +41,20 @@ def main():
     kg_cmap = matplotlib.colors.ListedColormap(rgb_vals/255)
     kg_cmap.set_bad('white',1.)
     
-    
-    #==============================================================================
-    #   Generate figures of Koppen-Geiger maps for periods and scenarios
-    #==============================================================================
-    
     regions = [
         ['World',       (-180, 180, -60, 84),   False,  (10,5)],
         ['Alps',        (6,14,42,50),           True,   (2.8,2.8)],
         ['Rocky Mts.',  (-122.05,-112,44,54),   True,   (2.8,2.8)]
         ]
-        
-    # Create output folder if it doesn't exist
-    os.makedirs(os.path.join('.',script_name), exist_ok=True)
-
-
-    # Loop over scenarios and periods
-    df_kg_major_change_prct = pd.DataFrame(np.zeros((len(scenarios),2))*np.nan,index=scenarios,columns=['1901-1930 to 1991-2020','1991-2020 to 2071-2100'])    
-    for scenario in scenarios:
-        print('===============================================================================')
-        print('Compute areas covered by major KG classes and transitions for '+scenario)
-        kg_maps = np.zeros((mapsize[0],mapsize[1],len(periods)),dtype=np.single)*np.nan
-        for pp in np.arange(len(periods)):
-            period = periods[pp]
-            
-            # Load global Koppen-Geiger map
-            suffix = str(180/config['upscale_mapsizes'][0][0]).replace('.','p')
-            ncfile1 = os.path.join(config['folder_out'],'climatologies_step3_resample_and_package',str(period[0])+'_'+str(period[1]),'koppen_geiger_'+suffix+'.nc')
-            ncfile2 = os.path.join(config['folder_out'],'climatologies_step3_resample_and_package',str(period[0])+'_'+str(period[1]),scenario,'koppen_geiger_'+suffix+'.nc')
-            if os.path.isfile(ncfile1):
-                ncfile = ncfile1
-            elif os.path.isfile(ncfile2):
-                ncfile = ncfile2
-            else:
-                raise Exception(f'Unable to load {ncfile1} or {ncfile2}')
-            print('loading '+ncfile)
-            with Dataset(ncfile) as dset:
-                data = np.array(dset.variables['kg_class'][:]).astype(int)
-                data[data==0] = np.nan
-                
-            # Loop over regions
-            for rr in np.arange(len(regions)):
-                #fname = (regions[rr][0]+'_'+file).replace('.nc','.png').replace(os.path.sep,'_')
-                fname = f'{period[0]}_{period[1]}_{scenario}_{regions[rr][0]}_{os.path.basename(ncfile).replace(".nc",".png")}'
-                pdb.set_trace()
-                figout = os.path.join('.',script_name,fname)
-                tools.plot_map(
-                    data=data,
-                    data_extent=(-180, 180, -90, 90),
-                    figout=figout,
-                    figdims=regions[rr][3],
-                    cmap=kg_cmap,
-                    plot_extent=regions[rr][1],
-                    lims=(0.5,30.5),
-                    interpolation='nearest',
-                    shp=country_shp,
-                    color='k',
-                    show_axes=regions[rr][2]
-                    )
-            print("Time elapsed is "+str(time.time()-t0)+" sec")
-
-
+      
+    periods = config['periods_historical']+config['periods_future']
+    scenarios = ['ssp119','ssp126','ssp245','ssp370','ssp434','ssp460','ssp585']
+    
+    
     #==============================================================================
     #   Generate Sankey diagrams
     #==============================================================================
     
-    scenarios = ['ssp119','ssp126','ssp245','ssp370','ssp434','ssp460','ssp585']
-    periods = config['periods_historical']+config['periods_future']
     trans_thresh_mm2 = 0.6
     
     colors = np.array([ \
@@ -121,9 +68,9 @@ def main():
     for scenario in scenarios:
     
         # Load area and transition data
-        df_kg_major_area_pct = pd.read_csv(os.path.join(config['folder_out'],'climatologies_step4_validation',scenario+'_kg_major_area_pct.csv'),index_col=0)
-        df_kg_major_area_mm2 = pd.read_csv(os.path.join(config['folder_out'],'climatologies_step4_validation',scenario+'_kg_major_area_mm2.csv'),index_col=0)
-        df_transitions_mm2 = pd.read_csv(os.path.join(config['folder_out'],'climatologies_step4_validation',scenario+'_transitions_mm2.csv'),index_col=None)
+        df_kg_major_area_pct = pd.read_csv(os.path.join('.','climatologies_step4_validation',scenario+'_kg_major_area_pct.csv'),index_col=0)
+        df_kg_major_area_mm2 = pd.read_csv(os.path.join('.','climatologies_step4_validation',scenario+'_kg_major_area_mm2.csv'),index_col=0)
+        df_transitions_mm2 = pd.read_csv(os.path.join('.','climatologies_step4_validation',scenario+'_transitions_mm2.csv'),index_col=None)
 
         # Make node and link lists
         node_colors, node_areas_mm2, node_areas_pct = [], [], []
@@ -173,7 +120,55 @@ def main():
         # Write figure
         outfile = os.path.join('.',script_name,scenario+'_sankey.pdf')
         fig.write_image(outfile)
-        print(outfile)
+        print(f'Created {outfile}')
+        
+        
+    #==============================================================================
+    #   Generate figures of Koppen-Geiger maps for periods and scenarios
+    #==============================================================================
+    
+    # Loop over scenarios and periods
+    for scenario in scenarios:
+    
+        print('===============================================================================')
+        print('Generating figures for '+scenario)
+        for pp in np.arange(len(periods)):
+            period = periods[pp]
+            
+            # Load global Koppen-Geiger map
+            suffix_full = str(180/config['mapsize'][0]).replace('.','p')[:10]
+            ncfile1 = os.path.join(config['folder_out'],'climatologies_step3_resample_and_package',str(period[0])+'_'+str(period[1]),'koppen_geiger_'+suffix_full+'.nc')
+            ncfile2 = os.path.join(config['folder_out'],'climatologies_step3_resample_and_package',str(period[0])+'_'+str(period[1]),scenario,'koppen_geiger_'+suffix_full+'.nc')
+            if os.path.isfile(ncfile1):
+                ncfile = ncfile1
+            elif os.path.isfile(ncfile2):
+                ncfile = ncfile2
+            else:
+                raise Exception(f'Unable to load {ncfile1} or {ncfile2}')
+            print('loading '+ncfile)
+            with Dataset(ncfile) as dset:
+                data = np.array(dset.variables['kg_class'][:]).astype(np.single)
+                data[data==0] = np.nan
+                
+            # Loop over regions
+            for rr in np.arange(len(regions)):
+                fname = f'{period[0]}_{period[1]}_{scenario}_{regions[rr][0]}_{os.path.basename(ncfile).replace(".nc",".png")}'
+                figout = os.path.join('.',script_name,fname)
+                os.makedirs(os.path.join('.',script_name), exist_ok=True)
+                tools.plot_map(
+                    data=data,
+                    data_extent=(-180, 180, -90, 90),
+                    figout=figout,
+                    figdims=regions[rr][3],
+                    cmap=kg_cmap,
+                    plot_extent=regions[rr][1],
+                    lims=(0.5,30.5),
+                    interpolation='nearest',
+                    shp=country_shp,
+                    color='k',
+                    show_axes=regions[rr][2]
+                    )
+            print("Time elapsed is "+str(time.time()-t0)+" sec")
 
 
     #==============================================================================
