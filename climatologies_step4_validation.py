@@ -17,7 +17,7 @@ from datetime import datetime
 from netCDF4 import Dataset
 import warnings
 import pickle
-import matplotlib as plt
+import matplotlib.pyplot as plt
 
 def main():
 
@@ -80,6 +80,7 @@ def main():
         
         # Discard Antarctica
         mask = np.min(kg_maps,axis=2)==0
+        mask[int(0.825*mask.shape[0]):,:] = 1
         for pp in np.arange(len(periods)):
             kg_maps[:,:,pp][mask] = 0
         
