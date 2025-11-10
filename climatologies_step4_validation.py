@@ -46,6 +46,55 @@ def main():
     xi, yi = np.meshgrid(np.arange(-180+res/2,180+res/2,res), np.arange(90-res/2,-90-res/2,-res))
     area_map = 10**-6*(40075*res/360)**2*np.cos(np.deg2rad(yi))
 
+
+    #------------------------------------------------------------------------------
+    # Temporary: compute differences between V2 and V3 maps    
+    '''
+    suffix = str(180/config['upscale_mapsizes'][0][0]).replace('.','p')
+    map_old_path = '/mnt/datawaha/hyex/beckhe/RESEARCH/Paper_30_New_KG_maps/climatologies/1991_2020/koppen_geiger_'+suffix+'.nc'
+    with Dataset(map_old_path) as dset:
+        kg_class_old = np.array(dset.variables['kg_class'][:]).astype(int)
+        kg_major_old = np.zeros(kg_class_old.shape,dtype=int)
+        for ii in np.arange(koppen_table.shape[0]):
+            mask = kg_class_old==koppen_table['Class'][ii]
+            kg_major_old[mask] = koppen_table['Major'][ii]
+            
+    map_new_path = os.path.join(config['folder_out'],'climatologies_step3_resample_and_package','1991_2020','koppen_geiger_'+suffix+'.nc')
+    with Dataset(map_new_path) as dset:
+        kg_class_new = np.array(dset.variables['kg_class'][:]).astype(int)
+        kg_major_new = np.zeros(kg_class_new.shape,dtype=int)
+        for ii in np.arange(koppen_table.shape[0]):
+            mask = kg_class_new==koppen_table['Class'][ii]
+            kg_major_new[mask] = koppen_table['Major'][ii]
+        
+    mask = (kg_major_old!=0) & (kg_major_new!=0)
+    mask[int(0.825*mask.shape[0]):,:] = 0
+    
+    mask_minor_change = (kg_class_old!=kg_class_new) & (mask)
+    mask_major_change = (kg_major_old!=kg_major_new) & (mask)
+    
+    area_change_minor = 100*np.sum(area_map[mask_minor_change])/np.sum(area_map[mask])
+    area_change_major = 100*np.sum(area_map[mask_major_change])/np.sum(area_map[mask])
+    
+    print(f'Land area changed minor class from V2 to V3: {str(area_change_minor)}%')
+    print(f'Land area changed major class from V2 to V3: {str(area_change_major)}%')
+    
+    plt.figure(0)
+    plt.imshow(mask)
+    plt.title('land mask')
+    
+    plt.figure(1)
+    plt.imshow(mask_minor_change)
+    plt.title('kg diff')
+    
+    plt.figure(2)
+    plt.imshow(mask_major_change)
+    plt.title('kg major diff')
+        
+    plt.show()
+    '''
+    #------------------------------------------------------------------------------
+        
     # Loop over scenarios and periods
     df_kg_major_change_prct = pd.DataFrame(np.zeros((len(scenarios),2))*np.nan,index=scenarios,columns=['1901-1930 to 1991-2020','1991-2020 to 2071-2100'])    
     for scenario in scenarios:
