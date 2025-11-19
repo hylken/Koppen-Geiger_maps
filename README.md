@@ -53,7 +53,11 @@ Produce a configuration file with the correct paths and folders based on the pro
 
 Create the environment and install the packages as follows:
 ```
-conda update conda
-conda config --set solver libmamba
-conda create -n Koppen-Geiger_maps -c conda-forge -c ska scipy pandas numpy netcdf4 matplotlib pymatreader statsmodels adjusttext seaborn scikit-image basemap rasterio pyshp plotly python-kaleido ska::tables
+conda env create -f environment.yml
+conda activate Koppen-Geiger_maps
+```
+
+Run the code:
+```
+python climatologies_step2_future.py config_local
 ```
