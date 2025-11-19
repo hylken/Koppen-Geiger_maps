@@ -16,5 +16,5 @@ config = {
         ['Temp','air_temperature','°C','tas',(-15,15)]
     ],
     'perform_sync': True,
-    'sync_cmd': "rclone copy -v --include='*.zip' $dir_local GoogleDrive:temp/Koppen-Geiger_maps_V3",
+    'sync_cmd': "rclone copy -v --include='*.zip' $dir_local GoogleDrive:temp/$dir_remote",
     }

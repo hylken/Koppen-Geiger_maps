@@ -48,7 +48,8 @@ def main():
         for dirpath, dirnames, _ in os.walk(root_folder):
             for dirname in dirnames:
                 subfolders.append(os.path.join(dirpath, dirname))
-                
+    
+    '''
     # Loop over all files and convert to netCDF
     for subfolder in subfolders:
         files = glob.glob(os.path.join(subfolder,'*.nc'))
@@ -101,7 +102,7 @@ def main():
                     tools.write_to_netcdf_2d(ncout,kg_class,'kg_class','',1)
                     tools.write_to_netcdf_2d(ncout,kg_confidence,'kg_confidence','%',1)
                     print("Time elapsed is "+str(time.time()-t0)+" sec")
-    
+    '''
     
     #==============================================================================
     #   Convert the Koppen-Geiger maps to geoTIFF
@@ -113,27 +114,34 @@ def main():
     for ii in np.arange(koppen_table.shape[0]):
         cmap[koppen_table['Class'][ii]] = tuple(koppen_table[['Red','Green','Blue']].iloc[ii])
 
-    # Loop over all files and convert to geoTIFF
+    subfolders = []
+    root_folder = os.path.join(config['folder_out'],script_name)
+    for dirpath, dirnames, _ in os.walk(root_folder):
+        for dirname in dirnames:
+            subfolders.append(os.path.join(dirpath, dirname))
+    
+    # Loop over all netCDF files and convert to geoTIFF
     for subfolder in subfolders:
         files = glob.glob(os.path.join(subfolder,'*koppen_geiger*.nc'))
         for file in files:
             t0 = time.time()
-            filename_new = os.path.basename(file).replace('.nc','.tif')
-            ncout = os.path.join(config['folder_out'],script_name,subfolder.replace(folders[0], '').replace(folders[1], '')[1:],filename_new)
-            if (os.path.isfile(ncout)) & (config['skip_existing']==True):
+            tifout = file.replace('.nc','.tif')
+            if (os.path.isfile(tifout)) & (config['skip_existing']==True):
                 continue
-            elif (os.path.isfile(ncout)) & (config['skip_existing']==False):
-                os.remove(ncout)
-            print('Creating '+ncout)
+            elif (os.path.isfile(tifout)) & (config['skip_existing']==False):
+                os.remove(tifout)
+            print('Creating '+tifout)
             with Dataset(file) as dset:
                 data = np.array(dset.variables['kg_class'][:])
-            tools.write_to_geotiff(ncout,data,cmap,0)
+            tools.write_to_geotiff(tifout,data,cmap,0)
             print("Time elapsed is "+str(time.time()-t0)+" sec")
-    
-    
+   
+   
     #==============================================================================
     #   Make zip files
     #==============================================================================
+    
+    legend_path = os.path.join('assets', 'legend.txt')
     
     # Delete existing zip files
     filelist = glob.glob(os.path.join(config['folder_out'],script_name,'*.zip'))
@@ -149,6 +157,8 @@ def main():
     compress_type = zipfile.ZIP_DEFLATED
     print('Creating '+zip_file)
     tools.zip_folder(zip_file,folder,pattern,compress_type)
+    with zipfile.ZipFile(zip_file, 'a', compression=compress_type) as zf:
+        zf.write(legend_path, arcname='legend.txt')
     print("Time elapsed is "+str(time.time()-t0)+" sec")
     
     # Create zip file with geoTIFF Koppen-Geiger maps
@@ -159,6 +169,8 @@ def main():
     compress_type = zipfile.ZIP_DEFLATED
     print('Creating '+zip_file)
     tools.zip_folder(zip_file,folder,pattern,compress_type)
+    with zipfile.ZipFile(zip_file, 'a', compression=compress_type) as zf:
+        zf.write(legend_path, arcname='legend.txt')
     print("Time elapsed is "+str(time.time()-t0)+" sec")
 
     # Create zip file with precipitation and air temperature climatologies
@@ -179,9 +191,8 @@ def main():
         tools.sync_data(
             config['sync_cmd'],
             dir_local = os.path.join(config['folder_out'],script_name),
-            dir_remote = '')
-    
-    print("IMPORTANT: Don't forget to manually add the legend.txt file to the two Koppen-Geiger zip files!")
+            dir_remote = os.path.basename(os.path.normpath(config['folder_out']))
+        )
     
     pdb.set_trace()
     
